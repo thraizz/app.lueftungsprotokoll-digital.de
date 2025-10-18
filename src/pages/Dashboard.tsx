@@ -6,12 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Plus, AlertCircle, CheckCircle, TrendingUp, Clock, AlertTriangle, CloudRain, Wind as WindIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { QuickStartVentilation } from "@/components/QuickStartVentilation";
+import { useVentilationRecommendations } from "@/hooks/use-ventilation-recommendations";
+import { VentilationRecommendationCard } from "@/components/VentilationRecommendation";
+import { ROOMS } from "@/lib/constants";
 
 const Dashboard = () => {
   const [entries, setEntries] = useState<VentilationEntry[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
   const [nextVentilationTime, setNextVentilationTime] = useState<string>("");
+  const { getRecommendation, currentApartment } = useVentilationRecommendations();
+  const [selectedRoom, setSelectedRoom] = useState<string>("");
 
   useEffect(() => {
     loadData();
@@ -232,6 +237,44 @@ const Dashboard = () => {
           </AlertDescription>
         </Alert>
       </div>
+
+      {/* Smart Recommendation Card */}
+      {currentApartment && selectedRoom && (
+        <VentilationRecommendationCard
+          recommendation={getRecommendation(selectedRoom)}
+          onAction={() => window.location.href = `/new-entry?room=${selectedRoom}`}
+          actionLabel="Jetzt lüften"
+          showDINInfo={true}
+        />
+      )}
+
+      {/* Room Selection for Recommendation */}
+      {currentApartment && !selectedRoom && ROOMS.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Lüftungsempfehlung für Raum</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Wählen Sie einen Raum, um eine spezifische Lüftungsempfehlung zu erhalten:
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {ROOMS.slice(0, 6).map((room) => (
+                <Button
+                  key={room.value}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedRoom(room.value)}
+                  className="justify-start"
+                >
+                  <span className="mr-2">{room.icon}</span>
+                  {room.label}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-card">

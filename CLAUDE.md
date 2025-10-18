@@ -1,3 +1,4 @@
 - no emojis
 - reusable components
 - dont start dev server
+- bun i, bun run build, bun run typecheck

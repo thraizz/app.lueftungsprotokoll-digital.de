@@ -18,12 +18,15 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ROOMS, VENTILATION_TYPES } from "@/lib/constants";
+import { useVentilationRecommendations } from "@/hooks/use-ventilation-recommendations";
+import { HumidityIndicator, CriticalAlert } from "@/components/VentilationRecommendation";
 
 const NewEntry = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(false);
+  const { checkCritical, getHumidityColor } = useVentilationRecommendations();
 
   const now = new Date();
   const [formData, setFormData] = useState({
@@ -323,8 +326,25 @@ const NewEntry = () => {
                   placeholder="z.B. 65"
                   required
                 />
+                {formData.humidityBefore && (
+                  <div className="mt-2">
+                    <HumidityIndicator
+                      humidity={parseFloat(formData.humidityBefore)}
+                      size="sm"
+                    />
+                  </div>
+                )}
               </div>
             </div>
+
+            {formData.humidityBefore && parseFloat(formData.humidityBefore) > 60 && (
+              <div className="mt-4">
+                <CriticalAlert
+                  humidity={parseFloat(formData.humidityBefore)}
+                  temp={formData.tempBefore ? parseFloat(formData.tempBefore) : undefined}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
