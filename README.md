@@ -1,33 +1,73 @@
-# Vue 3 + TypeScript + Vite
+# Welcome to your Lovable project
 
-This repo is a template for quickly starting a Vue 3 + TypeScript + Vite + Firebase + Vue Router (and some other libs) project.
+## Project info
 
-Fill out the `.env.example` file with your own values for the firebase config and rename it to `.env`.
+**URL**: https://lovable.dev/projects/c74f282c-c1a9-4864-a4b6-a8153bfae80b
 
-Then, create your Firebase Cloud Functions by running `firebase init functions`. This will create a `functions/` directory with a sample function,
-but also activate the necessary APIs in Google Cloud.
+## How can I edit this code?
 
-## Getting started
+There are several ways of editing your application.
 
-Run the init script to set up your firebase project and set up this template:
+**Use Lovable**
 
-```bash
-./init.sh
+Simply visit the [Lovable Project](https://lovable.dev/projects/c74f282c-c1a9-4864-a4b6-a8153bfae80b) and start prompting.
+
+Changes made via Lovable will be committed automatically to this repo.
+
+**Use your preferred IDE**
+
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
 ```
 
-## Development
+**Edit a file directly in GitHub**
 
-1. Install dependencies with `pnpm install`
-2. Start the firebase emulator with `pnpm emulators:start`
-3. Start building your firebase Cloud Functions by going into the functions/ directory and running `pnpm build:watch`
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-## Features
+**Use GitHub Codespaces**
 
-- Shadcn ui components
-- Tailwind for styling
-- Vuefire to interact with Firebase
-- A simple layout with authentication guards in place
-- Login/Register with email/password + Google Auth
-- A sample store for interacting with firestore (src/composables/useExample.ts)
-- A cloud function for deleting user data (functions/src/index.ts)
-- A settings page for deleting the user account (src/pages/settings.vue)
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
+
+## What technologies are used for this project?
+
+This project is built with:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+
+## How can I deploy this project?
+
+Simply open [Lovable](https://lovable.dev/projects/c74f282c-c1a9-4864-a4b6-a8153bfae80b) and click on Share -> Publish.
+
+## Can I connect a custom domain to my Lovable project?
+
+Yes, you can!
+
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
