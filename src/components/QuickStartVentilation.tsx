@@ -18,32 +18,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { addEntry, getAllApartments, Apartment } from "@/lib/db";
 import { Play, StopCircle, Wind } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-const ROOMS = [
-  { value: "Wohnzimmer", label: "Wohnzimmer", icon: "🛋️" },
-  { value: "Schlafzimmer", label: "Schlafzimmer", icon: "🛏️" },
-  { value: "Küche", label: "Küche", icon: "🍳" },
-  { value: "Bad", label: "Bad", icon: "🚿" },
-  { value: "Flur", label: "Flur", icon: "🚪" },
-  { value: "Arbeitszimmer", label: "Arbeitszimmer", icon: "💼" },
-  { value: "Kinderzimmer", label: "Kinderzimmer", icon: "🧸" },
-  { value: "Keller", label: "Keller", icon: "🏚️" },
-  { value: "Dachboden", label: "Dachboden", icon: "🏠" },
-  { value: "Sonstiges", label: "Sonstiges", icon: "📦" },
-];
-
-const VENTILATION_TYPES = [
-  { value: "Stoßlüften", label: "Stoßlüften", description: "Fenster vollständig öffnen" },
-  { value: "Querlüften", label: "Querlüften", description: "Gegenüberliegende Fenster öffnen" },
-  { value: "Kipplüften", label: "Kipplüften", description: "Fenster gekippt" },
-];
+import { ROOMS, VENTILATION_TYPES } from "@/lib/constants";
 
 interface QuickStartData {
   apartmentId: string;
-  room: string;
+  rooms: string[];
   ventilationType: string;
   tempBefore: number;
   humidityBefore: number;
@@ -62,7 +45,7 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
 
   // Form states
   const [selectedApartment, setSelectedApartment] = useState("");
-  const [selectedRoom, setSelectedRoom] = useState("");
+  const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
   const [selectedVentilationType, setSelectedVentilationType] = useState("");
   const [tempBefore, setTempBefore] = useState("");
   const [humidityBefore, setHumidityBefore] = useState("");
@@ -116,10 +99,10 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
       return;
     }
 
-    if (!selectedRoom) {
+    if (selectedRooms.length === 0) {
       toast({
         title: "Fehler",
-        description: "Bitte wählen Sie einen Raum aus",
+        description: "Bitte wählen Sie mindestens einen Raum aus",
         variant: "destructive",
       });
       return;
@@ -158,7 +141,7 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
     const now = new Date();
     const sessionInfo: QuickStartData = {
       apartmentId: selectedApartment,
-      room: selectedRoom,
+      rooms: selectedRooms,
       ventilationType: selectedVentilationType,
       tempBefore: tempValue,
       humidityBefore: humidityValue,
@@ -171,9 +154,13 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
     setShowStartDialog(false);
     setShowActiveSession(true);
 
+    const roomsText = selectedRooms.length === 1
+      ? selectedRooms[0]
+      : `${selectedRooms.length} Räume`;
+
     toast({
       title: "Lüftung gestartet",
-      description: `${selectedRoom} - ${selectedVentilationType}`,
+      description: `${roomsText} - ${selectedVentilationType}`,
     });
   };
 
@@ -201,11 +188,11 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
     }
 
     try {
-      const entry = {
+      // Create one entry per room
+      const baseEntry = {
         apartmentId: sessionData.apartmentId,
         date: sessionData.startDate,
         time: sessionData.startTime,
-        room: sessionData.room,
         ventilationType: sessionData.ventilationType,
         duration: durationMinutes,
         tempBefore: sessionData.tempBefore,
@@ -216,11 +203,21 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
         createdAt: Date.now(),
       };
 
-      await addEntry(entry);
+      // Save an entry for each room
+      for (const room of sessionData.rooms) {
+        await addEntry({
+          ...baseEntry,
+          room,
+        });
+      }
+
+      const roomsText = sessionData.rooms.length === 1
+        ? sessionData.rooms[0]
+        : `${sessionData.rooms.length} Räume`;
 
       toast({
         title: "Erfolgreich gespeichert",
-        description: `Lüftungsvorgang (${durationMinutes} Min.) wurde dokumentiert`,
+        description: `Lüftungsvorgang in ${roomsText} (${durationMinutes} Min.) wurde dokumentiert`,
       });
 
       // Reset all states
@@ -254,13 +251,21 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
   };
 
   const resetForm = () => {
-    setSelectedRoom("");
+    setSelectedRooms([]);
     setSelectedVentilationType("");
     setTempBefore("");
     setHumidityBefore("");
     setTempAfter("");
     setHumidityAfter("");
     setNotes("");
+  };
+
+  const toggleRoom = (roomValue: string) => {
+    setSelectedRooms((prev) =>
+      prev.includes(roomValue)
+        ? prev.filter((r) => r !== roomValue)
+        : [...prev, roomValue]
+    );
   };
 
   const openCompleteDialog = () => {
@@ -310,19 +315,24 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
             )}
 
             <div className="grid gap-2">
-              <Label htmlFor="room">Raum *</Label>
-              <Select value={selectedRoom} onValueChange={setSelectedRoom}>
-                <SelectTrigger id="room">
-                  <SelectValue placeholder="Raum auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROOMS.map((room) => (
-                    <SelectItem key={room.value} value={room.value}>
+              <Label>Räume * {selectedRooms.length > 0 && `(${selectedRooms.length} ausgewählt)`}</Label>
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-md max-h-[200px] overflow-y-auto">
+                {ROOMS.map((room) => (
+                  <div key={room.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`room-${room.value}`}
+                      checked={selectedRooms.includes(room.value)}
+                      onCheckedChange={() => toggleRoom(room.value)}
+                    />
+                    <label
+                      htmlFor={`room-${room.value}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
                       {room.icon} {room.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="grid gap-2">
@@ -394,7 +404,14 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
               Lüftung läuft
             </DialogTitle>
             <DialogDescription>
-              {sessionData?.room} - {sessionData?.ventilationType}
+              {sessionData && (
+                <>
+                  {sessionData.rooms.length === 1
+                    ? sessionData.rooms[0]
+                    : `${sessionData.rooms.length} Räume: ${sessionData.rooms.join(", ")}`
+                  } - {sessionData.ventilationType}
+                </>
+              )}
             </DialogDescription>
           </DialogHeader>
 
@@ -449,8 +466,16 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
           <div className="grid gap-4 py-4">
             <div className="p-4 rounded-lg bg-muted/50 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Raum:</span>
-                <span className="font-medium">{sessionData?.room}</span>
+                <span className="text-muted-foreground">
+                  {sessionData && sessionData.rooms.length === 1 ? "Raum:" : "Räume:"}
+                </span>
+                <span className="font-medium">
+                  {sessionData && (
+                    sessionData.rooms.length === 1
+                      ? sessionData.rooms[0]
+                      : `${sessionData.rooms.length} (${sessionData.rooms.join(", ")})`
+                  )}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Lüftungsart:</span>

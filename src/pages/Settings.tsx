@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { DataExportImport } from "@/components/DataExportImport";
 
 const Settings = () => {
   const { toast } = useToast();
@@ -231,6 +232,8 @@ const Settings = () => {
           </div>
         </CardContent>
       </Card>
+
+      <DataExportImport />
 
       <Card className="shadow-card bg-muted/30">
         <CardHeader>

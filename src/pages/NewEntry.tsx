@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -16,25 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-const ROOMS = [
-  "Wohnzimmer",
-  "Schlafzimmer",
-  "Küche",
-  "Bad",
-  "Flur",
-  "Arbeitszimmer",
-  "Kinderzimmer",
-  "Keller",
-  "Dachboden",
-  "Sonstiges",
-];
-
-const VENTILATION_TYPES = [
-  "Stoßlüften",
-  "Querlüften",
-  "Kipplüften",
-];
+import { ROOMS, VENTILATION_TYPES } from "@/lib/constants";
 
 const NewEntry = () => {
   const navigate = useNavigate();
@@ -47,7 +30,7 @@ const NewEntry = () => {
     apartmentId: "",
     date: now.toISOString().split("T")[0],
     time: now.toTimeString().slice(0, 5),
-    room: "",
+    rooms: [] as string[],
     ventilationType: "",
     duration: "",
     tempBefore: "",
@@ -69,13 +52,22 @@ const NewEntry = () => {
     }
   };
 
+  const toggleRoom = (roomValue: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      rooms: prev.rooms.includes(roomValue)
+        ? prev.rooms.filter((r) => r !== roomValue)
+        : [...prev.rooms, roomValue],
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       // Validation
-      if (!formData.apartmentId || !formData.room || !formData.ventilationType) {
+      if (!formData.apartmentId || formData.rooms.length === 0 || !formData.ventilationType) {
         toast({
           title: "Fehler",
           description: "Bitte füllen Sie alle Pflichtfelder aus.",
@@ -119,11 +111,11 @@ const NewEntry = () => {
         return;
       }
 
-      const entry = {
+      // Create base entry
+      const baseEntry = {
         apartmentId: formData.apartmentId,
         date: formData.date,
         time: formData.time,
-        room: formData.room,
         ventilationType: formData.ventilationType,
         duration,
         tempBefore,
@@ -134,11 +126,21 @@ const NewEntry = () => {
         createdAt: Date.now(),
       };
 
-      await addEntry(entry);
+      // Save an entry for each room
+      for (const room of formData.rooms) {
+        await addEntry({
+          ...baseEntry,
+          room,
+        });
+      }
+
+      const roomsText = formData.rooms.length === 1
+        ? formData.rooms[0]
+        : `${formData.rooms.length} Räume`;
 
       toast({
         title: "Erfolgreich gespeichert",
-        description: `Lüftungsvorgang für ${formData.room} wurde dokumentiert.`,
+        description: `Lüftungsvorgang für ${roomsText} wurde dokumentiert.`,
       });
 
       navigate("/");
@@ -227,22 +229,24 @@ const NewEntry = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="room">Raum *</Label>
-              <Select
-                value={formData.room}
-                onValueChange={(value) => setFormData({ ...formData, room: value })}
-              >
-                <SelectTrigger id="room">
-                  <SelectValue placeholder="Raum auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROOMS.map((room) => (
-                    <SelectItem key={room} value={room}>
-                      {room}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Räume * {formData.rooms.length > 0 && `(${formData.rooms.length} ausgewählt)`}</Label>
+              <div className="grid grid-cols-2 gap-2 p-3 border rounded-md max-h-[200px] overflow-y-auto">
+                {ROOMS.map((room) => (
+                  <div key={room.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`room-${room.value}`}
+                      checked={formData.rooms.includes(room.value)}
+                      onCheckedChange={() => toggleRoom(room.value)}
+                    />
+                    <label
+                      htmlFor={`room-${room.value}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {room.icon} {room.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -258,8 +262,11 @@ const NewEntry = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {VENTILATION_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">{type.label}</span>
+                        <span className="text-xs text-muted-foreground">{type.description}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

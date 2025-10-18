@@ -1,0 +1,3 @@
+- no emojis
+- reusable components
+- dont start dev server
