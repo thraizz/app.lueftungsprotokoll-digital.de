@@ -21,12 +21,16 @@ import { ROOMS, VENTILATION_TYPES } from "@/lib/constants";
 import { useVentilationRecommendations } from "@/hooks/use-ventilation-recommendations";
 import { HumidityIndicator, CriticalAlert } from "@/components/VentilationRecommendation";
 
+type FormStep = "initial" | "timer" | "after-measurements";
+
 const NewEntry = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(false);
   const { checkCritical, getHumidityColor } = useVentilationRecommendations();
+  const [step, setStep] = useState<FormStep>("initial");
+  const [timeRemaining, setTimeRemaining] = useState(0);
 
   const now = new Date();
   const [formData, setFormData] = useState({
@@ -47,6 +51,21 @@ const NewEntry = () => {
     loadApartments();
   }, []);
 
+  useEffect(() => {
+    if (step === "timer" && timeRemaining > 0) {
+      const interval = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            setStep("after-measurements");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [step, timeRemaining]);
+
   const loadApartments = async () => {
     const data = await getAllApartments();
     setApartments(data);
@@ -64,55 +83,73 @@ const NewEntry = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleInitialSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!formData.apartmentId || formData.rooms.length === 0 || !formData.ventilationType) {
+      toast({
+        title: "Fehler",
+        description: "Bitte füllen Sie alle Pflichtfelder aus.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const duration = parseInt(formData.duration);
+    if (isNaN(duration) || duration < 1 || duration > 60) {
+      toast({
+        title: "Fehler",
+        description: "Lüftungsdauer muss zwischen 1 und 60 Minuten liegen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const tempBefore = parseFloat(formData.tempBefore);
+    const humidityBefore = parseFloat(formData.humidityBefore);
+
+    if (isNaN(tempBefore) || isNaN(humidityBefore)) {
+      toast({
+        title: "Fehler",
+        description: "Bitte geben Sie gültige Werte für Temperatur und Luftfeuchtigkeit ein.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (humidityBefore < 0 || humidityBefore > 100) {
+      toast({
+        title: "Fehler",
+        description: "Luftfeuchtigkeit muss zwischen 0 und 100% liegen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Start timer
+    setTimeRemaining(duration * 60);
+    setStep("timer");
+  };
+
+  const handleSkipTimer = () => {
+    setStep("after-measurements");
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Validation
-      if (!formData.apartmentId || formData.rooms.length === 0 || !formData.ventilationType) {
-        toast({
-          title: "Fehler",
-          description: "Bitte füllen Sie alle Pflichtfelder aus.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
       const duration = parseInt(formData.duration);
-      if (isNaN(duration) || duration < 1 || duration > 60) {
-        toast({
-          title: "Fehler",
-          description: "Lüftungsdauer muss zwischen 1 und 60 Minuten liegen.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
       const tempBefore = parseFloat(formData.tempBefore);
       const humidityBefore = parseFloat(formData.humidityBefore);
-
-      if (isNaN(tempBefore) || isNaN(humidityBefore)) {
-        toast({
-          title: "Fehler",
-          description: "Bitte geben Sie gültige Werte für Temperatur und Luftfeuchtigkeit ein.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      if (humidityBefore < 0 || humidityBefore > 100) {
-        toast({
-          title: "Fehler",
-          description: "Luftfeuchtigkeit muss zwischen 0 und 100% liegen.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
 
       // Create base entry
       const baseEntry = {
@@ -175,11 +212,128 @@ const NewEntry = () => {
     );
   }
 
+  if (step === "timer") {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold text-foreground mb-6">Lüftungsvorgang läuft</h2>
+
+        <Card className="shadow-card">
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center space-y-6">
+              <div className="text-6xl font-bold text-primary">
+                {formatTime(timeRemaining)}
+              </div>
+              <p className="text-muted-foreground text-center">
+                Bitte lüften Sie jetzt die ausgewählten Räume.
+              </p>
+              <div className="w-full space-y-2">
+                <p className="text-sm font-medium">Ausgewählte Räume:</p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.rooms.map((roomValue) => {
+                    const room = ROOMS.find((r) => r.value === roomValue);
+                    return (
+                      <span key={roomValue} className="px-3 py-1 bg-secondary rounded-full text-sm">
+                        {room?.icon} {room?.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+              <Button
+                onClick={handleSkipTimer}
+                variant="outline"
+                className="w-full"
+              >
+                Timer überspringen
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (step === "after-measurements") {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <h2 className="text-2xl font-bold text-foreground mb-6">Messwerte nach dem Lüften</h2>
+
+        <form onSubmit={handleFinalSubmit} className="space-y-6">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Messwerte erfassen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tempAfter">Temperatur (°C)</Label>
+                  <Input
+                    id="tempAfter"
+                    type="number"
+                    step="0.1"
+                    value={formData.tempAfter}
+                    onChange={(e) =>
+                      setFormData({ ...formData, tempAfter: e.target.value })
+                    }
+                    placeholder="z.B. 19.0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="humidityAfter">Luftfeuchtigkeit (%)</Label>
+                  <Input
+                    id="humidityAfter"
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.humidityAfter}
+                    onChange={(e) =>
+                      setFormData({ ...formData, humidityAfter: e.target.value })
+                    }
+                    placeholder="z.B. 55"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Bemerkungen</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Optionale Notizen zum Lüftungsvorgang..."
+                  maxLength={500}
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {formData.notes.length}/500 Zeichen
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate("/")}
+              className="flex-1"
+            >
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={loading} className="flex-1">
+              {loading ? "Speichert..." : "Eintrag speichern"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold text-foreground mb-6">Neuer Lüftungseintrag</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleInitialSubmit} className="space-y-6">
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle>Allgemeine Angaben</CardTitle>
@@ -348,58 +502,6 @@ const NewEntry = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Messwerte nach dem Lüften (optional)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tempAfter">Temperatur (°C)</Label>
-                <Input
-                  id="tempAfter"
-                  type="number"
-                  step="0.1"
-                  value={formData.tempAfter}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tempAfter: e.target.value })
-                  }
-                  placeholder="z.B. 19.0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="humidityAfter">Luftfeuchtigkeit (%)</Label>
-                <Input
-                  id="humidityAfter"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={formData.humidityAfter}
-                  onChange={(e) =>
-                    setFormData({ ...formData, humidityAfter: e.target.value })
-                  }
-                  placeholder="z.B. 55"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Bemerkungen</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Optionale Notizen zum Lüftungsvorgang..."
-                maxLength={500}
-                rows={3}
-              />
-              <p className="text-xs text-muted-foreground">
-                {formData.notes.length}/500 Zeichen
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
         <div className="flex gap-3">
           <Button
             type="button"
@@ -409,8 +511,8 @@ const NewEntry = () => {
           >
             Abbrechen
           </Button>
-          <Button type="submit" disabled={loading} className="flex-1">
-            {loading ? "Speichert..." : "Eintrag speichern"}
+          <Button type="submit" className="flex-1">
+            Timer starten
           </Button>
         </div>
       </form>
