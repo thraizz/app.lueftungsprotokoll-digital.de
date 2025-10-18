@@ -1,13 +1,13 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export interface VentilationEntry {
   id?: number;
   apartmentId: string;
   date: string;
   time: string;
-  room: string;
+  rooms: string[];
   ventilationType: string;
   duration: number;
   tempBefore: number;
@@ -83,7 +83,7 @@ let dbPromise: Promise<IDBPDatabase<VentilationDB>> | null = null;
 export const getDB = async () => {
   if (!dbPromise) {
     dbPromise = openDB<VentilationDB>('ventilation-db', DB_VERSION, {
-      upgrade(db, oldVersion, newVersion, transaction) {
+      async upgrade(db, oldVersion, newVersion, transaction) {
         // Version 1: Initial schema
         if (oldVersion < 1) {
           if (!db.objectStoreNames.contains('entries')) {
@@ -120,6 +120,25 @@ export const getDB = async () => {
 
           if (!db.objectStoreNames.contains('metadata')) {
             db.createObjectStore('metadata', { keyPath: 'key' });
+          }
+        }
+
+        // Version 3: Migrate room string to rooms array
+        if (oldVersion < 3) {
+          const entriesStore = transaction.objectStore('entries');
+          const allEntries = await entriesStore.getAll();
+
+          for (const entry of allEntries) {
+            // Migrate old single room string to rooms array
+            if ('room' in entry && typeof entry.room === 'string') {
+              const migratedEntry = {
+                ...entry,
+                rooms: [entry.room],
+              };
+              // Remove old room property
+              delete (migratedEntry as any).room;
+              await entriesStore.put(migratedEntry);
+            }
           }
         }
       },
@@ -335,7 +354,7 @@ export const exportDataAsCSV = async () => {
     'Apartment ID',
     'Date',
     'Time',
-    'Room',
+    'Rooms',
     'Ventilation Type',
     'Duration (min)',
     'Temp Before (°C)',
@@ -351,7 +370,7 @@ export const exportDataAsCSV = async () => {
     entry.apartmentId,
     entry.date,
     entry.time,
-    entry.room,
+    entry.rooms.join(', '),
     entry.ventilationType,
     entry.duration,
     entry.tempBefore,

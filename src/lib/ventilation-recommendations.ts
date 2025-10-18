@@ -269,7 +269,7 @@ export class VentilationRecommendationEngine {
    */
   getNextRecommendedTime(room: string, lastEntries: VentilationEntry[]): Date | null {
     const roomAdvice = this.getRoomSpecificAdvice(room);
-    const roomEntries = lastEntries.filter((e) => e.room === room);
+    const roomEntries = lastEntries.filter((e) => e.rooms.includes(room));
 
     if (roomEntries.length === 0) {
       // Never ventilated, recommend now

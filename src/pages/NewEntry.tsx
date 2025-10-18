@@ -151,11 +151,12 @@ const NewEntry = () => {
       const tempBefore = parseFloat(formData.tempBefore);
       const humidityBefore = parseFloat(formData.humidityBefore);
 
-      // Create base entry
-      const baseEntry = {
+      // Create single entry with multiple rooms
+      await addEntry({
         apartmentId: formData.apartmentId,
         date: formData.date,
         time: formData.time,
+        rooms: formData.rooms,
         ventilationType: formData.ventilationType,
         duration,
         tempBefore,
@@ -164,15 +165,7 @@ const NewEntry = () => {
         humidityAfter: formData.humidityAfter ? parseFloat(formData.humidityAfter) : undefined,
         notes: formData.notes || undefined,
         createdAt: Date.now(),
-      };
-
-      // Save an entry for each room
-      for (const room of formData.rooms) {
-        await addEntry({
-          ...baseEntry,
-          room,
-        });
-      }
+      });
 
       const roomsText = formData.rooms.length === 1
         ? formData.rooms[0]
@@ -292,21 +285,6 @@ const NewEntry = () => {
                     placeholder="z.B. 55"
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Bemerkungen</Label>
-                <Textarea
-                  id="notes"
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Optionale Notizen zum Lüftungsvorgang..."
-                  maxLength={500}
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  {formData.notes.length}/500 Zeichen
-                </p>
               </div>
             </CardContent>
           </Card>

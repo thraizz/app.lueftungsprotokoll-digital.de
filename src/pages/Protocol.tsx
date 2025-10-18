@@ -41,7 +41,7 @@ const Protocol = () => {
     let filtered = [...entries];
 
     if (filterRoom !== "all") {
-      filtered = filtered.filter((e) => e.room === filterRoom);
+      filtered = filtered.filter((e) => e.rooms.includes(filterRoom));
     }
 
     if (filterApartment !== "all") {
@@ -67,7 +67,7 @@ const Protocol = () => {
     return "text-destructive";
   };
 
-  const uniqueRooms = Array.from(new Set(entries.map((e) => e.room)));
+  const uniqueRooms = Array.from(new Set(entries.flatMap((e) => e.rooms)));
 
   return (
     <div className="space-y-6">
@@ -158,7 +158,7 @@ const Protocol = () => {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-3">
                       <h3 className="font-semibold text-lg text-foreground">
-                        {entry.room}
+                        {entry.rooms.join(', ')}
                       </h3>
                       <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
                         {entry.ventilationType}
@@ -214,13 +214,6 @@ const Protocol = () => {
                         </div>
                       )}
                     </div>
-
-                    {entry.notes && (
-                      <div className="pt-2 border-t border-border">
-                        <span className="text-sm text-muted-foreground">Bemerkungen:</span>
-                        <p className="text-sm text-foreground mt-1">{entry.notes}</p>
-                      </div>
-                    )}
                   </div>
                 </div>
               </CardContent>

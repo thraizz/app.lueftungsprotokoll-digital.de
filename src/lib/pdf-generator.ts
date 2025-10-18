@@ -154,12 +154,11 @@ export async function generateVentilationProtocolPDF(
         (index + 1).toString(),
         formatDate(entry.date),
         entry.time,
-        getRoomLabel(entry.room),
+        entry.rooms.map(r => getRoomLabel(r)).join(', '),
         tempChange,
         humidityChange,
         getVentilationTypeLabel(entry.ventilationType),
         `${entry.duration} min`,
-        entry.notes || '-',
       ];
     });
 
@@ -170,12 +169,11 @@ export async function generateVentilationProtocolPDF(
           'Nr.',
           'Datum',
           'Uhrzeit',
-          'Raum',
+          'Räume',
           'Temperatur',
           'Luftfeuchte',
           'Lüftungsart',
           'Dauer',
-          'Bemerkungen',
         ],
       ],
       body: tableData,
@@ -199,7 +197,6 @@ export async function generateVentilationProtocolPDF(
         5: { cellWidth: 25 },
         6: { cellWidth: 25 },
         7: { cellWidth: 15 },
-        8: { cellWidth: 'auto' },
       },
       margin: { left: margin, right: margin },
       didDrawPage: (data) => {

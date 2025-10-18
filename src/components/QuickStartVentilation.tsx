@@ -188,11 +188,12 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
     }
 
     try {
-      // Create one entry per room
-      const baseEntry = {
+      // Create single entry with multiple rooms
+      await addEntry({
         apartmentId: sessionData.apartmentId,
         date: sessionData.startDate,
         time: sessionData.startTime,
+        rooms: sessionData.rooms,
         ventilationType: sessionData.ventilationType,
         duration: durationMinutes,
         tempBefore: sessionData.tempBefore,
@@ -201,15 +202,7 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
         humidityAfter: humidityAfter ? parseFloat(humidityAfter) : undefined,
         notes: notes || undefined,
         createdAt: Date.now(),
-      };
-
-      // Save an entry for each room
-      for (const room of sessionData.rooms) {
-        await addEntry({
-          ...baseEntry,
-          room,
-        });
-      }
+      });
 
       const roomsText = sessionData.rooms.length === 1
         ? sessionData.rooms[0]
@@ -512,21 +505,6 @@ export const QuickStartVentilation = ({ onEntryCreated }: { onEntryCreated?: () 
                   value={humidityAfter}
                   onChange={(e) => setHumidityAfter(e.target.value)}
                 />
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="notes">Bemerkungen</Label>
-              <Textarea
-                id="notes"
-                placeholder="Optional: Besondere Beobachtungen..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                maxLength={500}
-                rows={3}
-              />
-              <div className="text-xs text-muted-foreground text-right">
-                {notes.length}/500 Zeichen
               </div>
             </div>
           </div>
