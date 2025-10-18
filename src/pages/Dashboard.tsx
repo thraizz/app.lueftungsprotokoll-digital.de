@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, AlertCircle, CheckCircle, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { QuickStartVentilation } from "@/components/QuickStartVentilation";
 
 const Dashboard = () => {
   const [entries, setEntries] = useState<VentilationEntry[]>([]);
@@ -82,12 +83,15 @@ const Dashboard = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Übersicht</h2>
         <Link to="/new-entry">
-          <Button size="lg" className="shadow-elegant">
+          <Button size="lg" variant="outline" className="shadow-elegant">
             <Plus className="w-5 h-5 mr-2" />
             Neuer Eintrag
           </Button>
         </Link>
       </div>
+
+      {/* Quick Start Ventilation Button */}
+      <QuickStartVentilation onEntryCreated={loadData} />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="shadow-card">
