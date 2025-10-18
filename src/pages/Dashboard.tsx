@@ -238,42 +238,66 @@ const Dashboard = () => {
         </Alert>
       </div>
 
-      {/* Smart Recommendation Card */}
-      {currentApartment && selectedRoom && (
-        <VentilationRecommendationCard
-          recommendation={getRecommendation(selectedRoom)}
-          onAction={() => window.location.href = `/new-entry?room=${selectedRoom}`}
-          actionLabel="Jetzt lüften"
-          showDINInfo={true}
-        />
-      )}
+      {/* Smart Recommendation Card - Default for whole apartment */}
+      {currentApartment && (
+        <div className="space-y-4">
+          <VentilationRecommendationCard
+            recommendation={getRecommendation(
+              selectedRoom || "Wohnzimmer",
+              avgHumidity > 0 ? avgHumidity : undefined
+            )}
+            onAction={() => window.location.href = '/new-entry'}
+            actionLabel="Jetzt lüften"
+            showDINInfo={true}
+          />
 
-      {/* Room Selection for Recommendation */}
-      {currentApartment && !selectedRoom && ROOMS.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Lüftungsempfehlung für Raum</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Wählen Sie einen Raum, um eine spezifische Lüftungsempfehlung zu erhalten:
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {ROOMS.slice(0, 6).map((room) => (
+          {/* Optional: Room-specific recommendations */}
+          {!selectedRoom && ROOMS.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Raum-spezifische Empfehlung anzeigen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {ROOMS.slice(0, 8).map((room) => (
+                    <Button
+                      key={room.value}
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedRoom(room.value)}
+                      className="justify-start h-auto py-2"
+                    >
+                      <span className="mr-2">{room.icon}</span>
+                      <span className="text-xs">{room.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Show selected room recommendation */}
+          {selectedRoom && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium">Spezifische Empfehlung: {selectedRoom}</h3>
                 <Button
-                  key={room.value}
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => setSelectedRoom(room.value)}
-                  className="justify-start"
+                  onClick={() => setSelectedRoom("")}
                 >
-                  <span className="mr-2">{room.icon}</span>
-                  {room.label}
+                  Zurück zur allgemeinen Empfehlung
                 </Button>
-              ))}
+              </div>
+              <VentilationRecommendationCard
+                recommendation={getRecommendation(selectedRoom)}
+                onAction={() => window.location.href = `/new-entry?room=${selectedRoom}`}
+                actionLabel={`${selectedRoom} jetzt lüften`}
+                showDINInfo={false}
+              />
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
