@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
 import {
   getAllApartments,
   addApartment,
@@ -404,6 +405,18 @@ const Settings = () => {
           <p className="font-medium text-foreground pt-2">
             Die App ersetzt keine rechtliche oder bauphysikalische Beratung.
           </p>
+
+          <div className="pt-3 border-t border-border">
+            <Link
+              to="/hilfe"
+              className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+            >
+              Weitere Informationen in der Hilfe
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
         </CardContent>
       </Card>
 

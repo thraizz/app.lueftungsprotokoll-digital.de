@@ -23,9 +23,29 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </header>
 
-      <main className="flex-1 container mx-auto px-4 py-6 pb-24">
+      <main className="flex-1 container mx-auto px-4 py-6 pb-32">
         {children}
       </main>
+
+      <footer className="bg-muted/30 border-t border-border mt-8">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-muted-foreground">
+            <span>&copy; {new Date().getFullYear()} Lüftungsprotokoll Digital</span>
+            <span className="hidden sm:inline">•</span>
+            <div className="flex gap-4">
+              <Link to="/impressum" className="hover:text-foreground transition-colors">
+                Impressum
+              </Link>
+              <Link to="/datenschutz" className="hover:text-foreground transition-colors">
+                Datenschutz
+              </Link>
+              <Link to="/hilfe" className="hover:text-foreground transition-colors">
+                Hilfe
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-elegant">
         <div className="container mx-auto px-4">

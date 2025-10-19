@@ -8,6 +8,9 @@ import Dashboard from "./pages/Dashboard";
 import NewEntry from "./pages/NewEntry";
 import Protocol from "./pages/Protocol";
 import Settings from "./pages/Settings";
+import Impressum from "./pages/Impressum";
+import Datenschutz from "./pages/Datenschutz";
+import Hilfe from "./pages/Hilfe";
 import NotFound from "./pages/NotFound";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { useAutoBackup } from "./hooks/use-auto-backup";
@@ -28,6 +31,9 @@ const AppContent = () => {
           <Route path="/new-entry" element={<Layout><NewEntry /></Layout>} />
           <Route path="/protocol" element={<Layout><Protocol /></Layout>} />
           <Route path="/settings" element={<Layout><Settings /></Layout>} />
+          <Route path="/impressum" element={<Layout><Impressum /></Layout>} />
+          <Route path="/datenschutz" element={<Layout><Datenschutz /></Layout>} />
+          <Route path="/hilfe" element={<Layout><Hilfe /></Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
