@@ -5,18 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, AlertCircle, CheckCircle, TrendingUp, Clock, AlertTriangle, CloudRain, Wind as WindIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { QuickStartVentilation } from "@/components/QuickStartVentilation";
-import { useVentilationRecommendations } from "@/hooks/use-ventilation-recommendations";
-import { VentilationRecommendationCard } from "@/components/VentilationRecommendation";
-import { ROOMS } from "@/lib/constants";
 
 const Dashboard = () => {
   const [entries, setEntries] = useState<VentilationEntry[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
   const [nextVentilationTime, setNextVentilationTime] = useState<string>("");
-  const { getRecommendation, currentApartment } = useVentilationRecommendations();
-  const [selectedRoom, setSelectedRoom] = useState<string>("");
 
   useEffect(() => {
     loadData();
@@ -194,9 +188,6 @@ const Dashboard = () => {
         </Link>
       </div>
 
-      {/* Quick Start Ventilation Button */}
-      <QuickStartVentilation onEntryCreated={loadData} />
-
       {/* Current Hints Section */}
       <div className="space-y-3">
         {/* No ventilation today warning */}
@@ -237,68 +228,6 @@ const Dashboard = () => {
           </AlertDescription>
         </Alert>
       </div>
-
-      {/* Smart Recommendation Card - Default for whole apartment */}
-      {currentApartment && (
-        <div className="space-y-4">
-          <VentilationRecommendationCard
-            recommendation={getRecommendation(
-              selectedRoom || "Wohnzimmer",
-              avgHumidity > 0 ? avgHumidity : undefined
-            )}
-            onAction={() => window.location.href = '/new-entry'}
-            actionLabel="Jetzt lüften"
-            showDINInfo={true}
-          />
-
-          {/* Optional: Room-specific recommendations */}
-          {!selectedRoom && ROOMS.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Raum-spezifische Empfehlung anzeigen</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {ROOMS.slice(0, 8).map((room) => (
-                    <Button
-                      key={room.value}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedRoom(room.value)}
-                      className="justify-start h-auto py-2"
-                    >
-                      <span className="mr-2">{room.icon}</span>
-                      <span className="text-xs">{room.label}</span>
-                    </Button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Show selected room recommendation */}
-          {selectedRoom && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium">Spezifische Empfehlung: {selectedRoom}</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedRoom("")}
-                >
-                  Zurück zur allgemeinen Empfehlung
-                </Button>
-              </div>
-              <VentilationRecommendationCard
-                recommendation={getRecommendation(selectedRoom)}
-                onAction={() => window.location.href = `/new-entry?room=${selectedRoom}`}
-                actionLabel={`${selectedRoom} jetzt lüften`}
-                showDINInfo={false}
-              />
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-card">
