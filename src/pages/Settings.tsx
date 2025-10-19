@@ -377,7 +377,23 @@ const Settings = () => {
           </div>
 
           <div>
-            <p className="font-medium text-foreground mb-1">Rechtliche Anforderungen</p>
+            <p className="font-medium text-foreground mb-1">Was ist die DIN 1946-6?</p>
+            <p>
+              Die DIN 1946-6 ist ein <strong>Planungs- und Baustandard</strong> für Lüftungskonzepte, kein Gesetz.
+              Sie wird aber rechtlich relevant durch:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-2 mt-2">
+              <li><strong>Gebäudeenergiegesetz (GEG):</strong> Verweist auf "anerkannte Regeln der Technik"</li>
+              <li><strong>Landesbauordnungen:</strong> Fordern "gesunde Wohnverhältnisse" und ausreichende Lüftung</li>
+              <li><strong>BGB § 535:</strong> Vermieter muss Mietsache in gebrauchsfähigem Zustand erhalten</li>
+            </ul>
+            <p className="mt-2">
+              Bei Nichteinhaltung können Gewährleistungsansprüche oder Schadensersatzforderungen entstehen.
+            </p>
+          </div>
+
+          <div>
+            <p className="font-medium text-foreground mb-1">Ihre Lüftungspflicht als Mieter/Nutzer</p>
             <p>
               Nach aktueller Rechtsprechung müssen Mieter <strong>2-4 mal täglich</strong> stoßlüften,
               plus zusätzlich nach feuchteintensiven Tätigkeiten (Duschen, Kochen, Wäschetrocknen).
@@ -387,10 +403,13 @@ const Settings = () => {
           <div>
             <p className="font-medium text-foreground mb-1">DIN 1946-6 Lüftungsstufen</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
-              <li><strong>Feuchteschutz:</strong> Muss nutzerunabhängig sein (z.B. Fensterfalzlüfter)</li>
-              <li><strong>Nennlüftung:</strong> Tägliche Lüftung - hier dokumentieren Sie Ihr Stoßlüften</li>
-              <li><strong>Intensivlüftung:</strong> Nach Duschen, Kochen etc. - ebenfalls dokumentiert</li>
+              <li><strong>Stufe 1 - Feuchteschutz:</strong> Nutzerunabhängig (z.B. Fensterfalzlüfter) - Vermieterverantwortung</li>
+              <li><strong>Stufe 2 - Nennlüftung:</strong> Tägliche Lüftung durch Stoßlüften - Ihre Verantwortung</li>
+              <li><strong>Stufe 3 - Intensivlüftung:</strong> Nach Duschen, Kochen etc. - Ihre Verantwortung</li>
             </ul>
+            <p className="mt-2">
+              Diese App dokumentiert <strong>Stufe 2 & 3</strong> - Ihre aktive Lüftung.
+            </p>
           </div>
 
           <div>

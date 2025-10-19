@@ -25,9 +25,14 @@ const faqs = [
       "Ja. Die App dokumentiert Ihre Nennlüftung und Intensivlüftung (DIN 1946-6 Stufen 2 & 3) gemäß deutscher Rechtsprechung. Nach Gerichtsurteilen müssen Mieter 2-4 mal täglich stoßlüften. Ihre Einträge sind mit Zeitstempeln versehen und unveränderlich. Die PDF-Exporte enthalten alle notwendigen Informationen für rechtliche Nachweise.",
   },
   {
-    question: "Was hat es mit DIN 1946-6 auf sich?",
+    question: "Was ist die DIN 1946-6 und ist sie ein Gesetz?",
     answer:
-      "DIN 1946-6 definiert 3 Lüftungsstufen: 1) Feuchteschutz (nutzerunabhängig, z.B. durch Fensterfalzlüfter), 2) Nennlüftung (tägliche Lüftung durch Stoßlüften), 3) Intensivlüftung (nach Duschen, Kochen etc.). Diese App dokumentiert Stufe 2 & 3 – Ihre aktive Lüftung durch Stoßlüften, für die Sie als Mieter/Nutzer verantwortlich sind.",
+      "Die DIN 1946-6 ist ein Planungs- und Baustandard für Lüftungskonzepte - kein Gesetz, sondern ein privates technisches Regelwerk. Sie wird aber rechtlich relevant als 'anerkannte Regel der Technik' durch: (1) Gebäudeenergiegesetz (GEG), (2) Landesbauordnungen (gesunde Wohnverhältnisse), (3) BGB § 535 (Vermieterpflichten). Die Norm definiert 3 Lüftungsstufen: (1) Feuchteschutz (nutzerunabhängig, Vermieterverantwortung), (2) Nennlüftung (tägliches Stoßlüften, Ihre Verantwortung), (3) Intensivlüftung (nach Duschen/Kochen, Ihre Verantwortung). Diese App dokumentiert Stufe 2 & 3.",
+  },
+  {
+    question: "Welche rechtliche Bedeutung hat die DIN 1946-6?",
+    answer:
+      "DIN-Normen sind keine Gesetze, gelten aber als 'anerkannte Regeln der Technik'. Bei Nichteinhaltung können Gewährleistungsansprüche oder Schadensersatzforderungen entstehen. Das GEG (Gebäudeenergiegesetz) verweist auf solche Standards, und Landesbauordnungen fordern 'gesunde Wohnverhältnisse'. Im Streitfall (z.B. Schimmel) wird oft geprüft, ob beide Seiten - Vermieter (Stufe 1: Feuchteschutz) und Mieter (Stufe 2 & 3: Lüftung) - ihren Pflichten nachgekommen sind.",
   },
   {
     question: "Wo werden meine Daten gespeichert?",
