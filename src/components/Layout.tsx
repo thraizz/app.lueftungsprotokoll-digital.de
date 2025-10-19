@@ -13,11 +13,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="bg-card border-b border-border shadow-card sticky top-0 z-10">
+      <header className="bg-card border-b border-border shadow-card">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-primary">
-            Lüftungsprotokoll Digital
-          </h1>
+          <Link to="/" className="w-fit">
+            <h1 className="text-2xl font-bold text-primary">
+              Lüftungsprotokoll Digital
+            </h1>
+          </Link>
         </div>
       </header>
 
