@@ -281,6 +281,7 @@ const NewEntry = () => {
                   <Input
                     id="humidityAfter"
                     type="number"
+                    step="0.1"
                     min="0"
                     max="100"
                     value={formData.humidityAfter}
@@ -454,6 +455,7 @@ const NewEntry = () => {
                 <Input
                   id="humidityBefore"
                   type="number"
+                  step="0.1"
                   min="0"
                   max="100"
                   value={formData.humidityBefore}
