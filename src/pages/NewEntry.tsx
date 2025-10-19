@@ -52,6 +52,18 @@ const NewEntry = () => {
   }, []);
 
   useEffect(() => {
+    if (formData.apartmentId) {
+      const apartment = apartments.find((apt) => apt.id === formData.apartmentId);
+      if (apartment?.rooms) {
+        setFormData((prev) => ({
+          ...prev,
+          rooms: apartment.rooms.map((room) => room.name),
+        }));
+      }
+    }
+  }, [formData.apartmentId, apartments]);
+
+  useEffect(() => {
     if (step === "timer" && targetEndTime !== null) {
       const interval = setInterval(() => {
         const now = Date.now();
