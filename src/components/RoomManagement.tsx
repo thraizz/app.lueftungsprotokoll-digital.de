@@ -1,8 +1,16 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Room, getDefaultRooms } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Plus, Trash2, GripVertical, Edit } from "lucide-react";
 import {
   AlertDialog,
@@ -21,39 +29,50 @@ interface RoomManagementProps {
   disabled?: boolean;
 }
 
+interface RoomFormData {
+  name: string;
+  icon: string;
+}
+
 export const RoomManagement = ({ rooms, onChange, disabled }: RoomManagementProps) => {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [deleteRoomId, setDeleteRoomId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({ name: "", icon: "" });
 
-  const handleAddRoom = () => {
-    if (!formData.name.trim()) return;
+  const form = useForm<RoomFormData>({
+    defaultValues: {
+      name: "",
+      icon: "",
+    },
+  });
+
+  const handleAddRoom = (data: RoomFormData) => {
+    if (!data.name.trim()) return;
 
     const newRoom: Room = {
       id: `room-${Date.now()}`,
-      name: formData.name.trim(),
-      icon: formData.icon.trim() || undefined,
+      name: data.name.trim(),
+      icon: data.icon.trim() || undefined,
       order: rooms.length + 1,
     };
 
     onChange([...rooms, newRoom]);
-    setFormData({ name: "", icon: "" });
+    form.reset();
     setShowAddForm(false);
   };
 
-  const handleEditRoom = () => {
-    if (!editingRoom || !formData.name.trim()) return;
+  const handleEditRoom = (data: RoomFormData) => {
+    if (!editingRoom || !data.name.trim()) return;
 
     const updatedRooms = rooms.map((room) =>
       room.id === editingRoom.id
-        ? { ...room, name: formData.name.trim(), icon: formData.icon.trim() || undefined }
+        ? { ...room, name: data.name.trim(), icon: data.icon.trim() || undefined }
         : room
     );
 
     onChange(updatedRooms);
     setEditingRoom(null);
-    setFormData({ name: "", icon: "" });
+    form.reset();
   };
 
   const handleDeleteRoom = () => {
@@ -75,13 +94,14 @@ export const RoomManagement = ({ rooms, onChange, disabled }: RoomManagementProp
 
   const startEdit = (room: Room) => {
     setEditingRoom(room);
-    setFormData({ name: room.name, icon: room.icon || "" });
+    form.setValue("name", room.name);
+    form.setValue("icon", room.icon || "");
   };
 
   const cancelEdit = () => {
     setEditingRoom(null);
     setShowAddForm(false);
-    setFormData({ name: "", icon: "" });
+    form.reset();
   };
 
   return (
@@ -147,53 +167,72 @@ export const RoomManagement = ({ rooms, onChange, disabled }: RoomManagementProp
       )}
 
       {(showAddForm || editingRoom) && (
-        <div className="p-4 bg-muted/50 rounded-lg space-y-4">
-          <h4 className="font-semibold">
-            {editingRoom ? "Raum bearbeiten" : "Neuer Raum"}
-          </h4>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(editingRoom ? handleEditRoom : handleAddRoom)}
+            className="p-4 bg-muted/50 rounded-lg space-y-4"
+          >
+            <h4 className="font-semibold">
+              {editingRoom ? "Raum bearbeiten" : "Neuer Raum"}
+            </h4>
 
-          <div className="space-y-2">
-            <Label htmlFor="room-name">Name *</Label>
-            <Input
-              id="room-name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="z.B. Gästezimmer"
-              disabled={disabled}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="z.B. Gästezimmer"
+                      disabled={disabled}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="room-icon">Icon (optional)</Label>
-            <Input
-              id="room-icon"
-              value={formData.icon}
-              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              placeholder="z.B. 🏠"
-              maxLength={2}
-              disabled={disabled}
+            <FormField
+              control={form.control}
+              name="icon"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Icon (optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="z.B. 🏠"
+                      maxLength={2}
+                      disabled={disabled}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={cancelEdit}
-              className="flex-1"
-              disabled={disabled}
-            >
-              Abbrechen
-            </Button>
-            <Button
-              onClick={editingRoom ? handleEditRoom : handleAddRoom}
-              className="flex-1"
-              disabled={disabled || !formData.name.trim()}
-            >
-              {editingRoom ? "Speichern" : "Hinzufügen"}
-            </Button>
-          </div>
-        </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={cancelEdit}
+                className="flex-1"
+                disabled={disabled}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={disabled || !form.watch("name").trim()}
+              >
+                {editingRoom ? "Speichern" : "Hinzufügen"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       )}
 
       <AlertDialog open={!!deleteRoomId} onOpenChange={() => setDeleteRoomId(null)}>

@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
 import { addEntry, getAllApartments, Apartment, Room } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -14,6 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -22,6 +29,20 @@ import { useVentilationRecommendations } from "@/hooks/use-ventilation-recommend
 import { HumidityIndicator, CriticalAlert } from "@/components/VentilationRecommendation";
 
 type FormStep = "initial" | "timer" | "after-measurements";
+
+interface FormData {
+  apartmentId: string;
+  date: string;
+  time: string;
+  rooms: string[];
+  ventilationType: string;
+  duration: string;
+  tempBefore: string;
+  humidityBefore: string;
+  tempAfter?: string;
+  humidityAfter?: string;
+  notes?: string;
+}
 
 const NewEntry = () => {
   const navigate = useNavigate();
@@ -34,18 +55,20 @@ const NewEntry = () => {
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
 
   const now = new Date();
-  const [formData, setFormData] = useState({
-    apartmentId: "",
-    date: now.toISOString().split("T")[0],
-    time: now.toTimeString().slice(0, 5),
-    rooms: [] as string[],
-    ventilationType: "",
-    duration: "",
-    tempBefore: "",
-    humidityBefore: "",
-    tempAfter: "",
-    humidityAfter: "",
-    notes: "",
+  const form = useForm<FormData>({
+    defaultValues: {
+      apartmentId: "",
+      date: now.toISOString().split("T")[0],
+      time: now.toTimeString().slice(0, 5),
+      rooms: [],
+      ventilationType: "",
+      duration: "",
+      tempBefore: "",
+      humidityBefore: "",
+      tempAfter: "",
+      humidityAfter: "",
+      notes: "",
+    },
   });
 
   useEffect(() => {
@@ -53,16 +76,14 @@ const NewEntry = () => {
   }, []);
 
   useEffect(() => {
-    if (formData.apartmentId) {
-      const apartment = apartments.find((apt) => apt.id === formData.apartmentId);
+    const apartmentId = form.watch("apartmentId");
+    if (apartmentId) {
+      const apartment = apartments.find((apt) => apt.id === apartmentId);
       if (apartment?.rooms) {
-        setFormData((prev) => ({
-          ...prev,
-          rooms: apartment.rooms.map((room) => room.name),
-        }));
+        form.setValue("rooms", apartment.rooms.map((room) => room.name));
       }
     }
-  }, [formData.apartmentId, apartments]);
+  }, [form.watch("apartmentId"), apartments, form]);
 
   useEffect(() => {
     if (step === "timer" && targetEndTime !== null) {
@@ -85,29 +106,26 @@ const NewEntry = () => {
     const data = await getAllApartments();
     setApartments(data);
     if (data.length === 1) {
-      setFormData((prev) => ({ ...prev, apartmentId: data[0].id }));
+      form.setValue("apartmentId", data[0].id);
     }
   };
 
   const toggleRoom = (roomName: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      rooms: prev.rooms.includes(roomName)
-        ? prev.rooms.filter((r) => r !== roomName)
-        : [...prev.rooms, roomName],
-    }));
+    const currentRooms = form.getValues("rooms");
+    const newRooms = currentRooms.includes(roomName)
+      ? currentRooms.filter((r) => r !== roomName)
+      : [...currentRooms, roomName];
+    form.setValue("rooms", newRooms);
   };
 
   const getCurrentApartmentRooms = (): Room[] => {
-    const apartment = apartments.find((apt) => apt.id === formData.apartmentId);
+    const apartment = apartments.find((apt) => apt.id === form.getValues("apartmentId"));
     return apartment?.rooms || [];
   };
 
-  const handleInitialSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleInitialSubmit = (data: FormData) => {
     // Validation
-    if (!formData.apartmentId || formData.rooms.length === 0 || !formData.ventilationType) {
+    if (!data.apartmentId || data.rooms.length === 0 || !data.ventilationType) {
       toast({
         title: "Fehler",
         description: "Bitte füllen Sie alle Pflichtfelder aus.",
@@ -116,7 +134,7 @@ const NewEntry = () => {
       return;
     }
 
-    const duration = parseInt(formData.duration);
+    const duration = parseInt(data.duration);
     if (isNaN(duration) || duration < 1 || duration > 60) {
       toast({
         title: "Fehler",
@@ -126,8 +144,8 @@ const NewEntry = () => {
       return;
     }
 
-    const tempBefore = parseFloat(formData.tempBefore);
-    const humidityBefore = parseFloat(formData.humidityBefore);
+    const tempBefore = parseFloat(data.tempBefore);
+    const humidityBefore = parseFloat(data.humidityBefore);
 
     if (isNaN(tempBefore) || isNaN(humidityBefore)) {
       toast({
@@ -164,34 +182,33 @@ const NewEntry = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleFinalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFinalSubmit = async (data: FormData) => {
     setLoading(true);
 
     try {
-      const duration = parseInt(formData.duration);
-      const tempBefore = parseFloat(formData.tempBefore);
-      const humidityBefore = parseFloat(formData.humidityBefore);
+      const duration = parseInt(data.duration);
+      const tempBefore = parseFloat(data.tempBefore);
+      const humidityBefore = parseFloat(data.humidityBefore);
 
       // Create single entry with multiple rooms
       await addEntry({
-        apartmentId: formData.apartmentId,
-        date: formData.date,
-        time: formData.time,
-        rooms: formData.rooms,
-        ventilationType: formData.ventilationType,
+        apartmentId: data.apartmentId,
+        date: data.date,
+        time: data.time,
+        rooms: data.rooms,
+        ventilationType: data.ventilationType,
         duration,
         tempBefore,
         humidityBefore,
-        tempAfter: formData.tempAfter ? parseFloat(formData.tempAfter) : undefined,
-        humidityAfter: formData.humidityAfter ? parseFloat(formData.humidityAfter) : undefined,
-        notes: formData.notes || undefined,
+        tempAfter: data.tempAfter ? parseFloat(data.tempAfter) : undefined,
+        humidityAfter: data.humidityAfter ? parseFloat(data.humidityAfter) : undefined,
+        notes: data.notes || undefined,
         createdAt: Date.now(),
       });
 
-      const roomsText = formData.rooms.length === 1
-        ? formData.rooms[0]
-        : `${formData.rooms.length} Räume`;
+      const roomsText = data.rooms.length === 1
+        ? data.rooms[0]
+        : `${data.rooms.length} Räume`;
 
       toast({
         title: "Erfolgreich gespeichert",
@@ -228,6 +245,7 @@ const NewEntry = () => {
   }
 
   if (step === "timer") {
+    const rooms = form.getValues("rooms");
     return (
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold text-foreground mb-6">Lüftungsvorgang läuft</h2>
@@ -244,7 +262,7 @@ const NewEntry = () => {
               <div className="w-full space-y-2">
                 <p className="text-sm font-medium">Ausgewählte Räume:</p>
                 <div className="flex flex-wrap gap-2">
-                  {formData.rooms.map((roomName) => {
+                  {rooms.map((roomName) => {
                     const room = getCurrentApartmentRooms().find((r) => r.name === roomName);
                     return (
                       <span key={roomName} className="px-3 py-1 bg-secondary rounded-full text-sm">
@@ -273,59 +291,71 @@ const NewEntry = () => {
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold text-foreground mb-6">Messwerte nach dem Lüften</h2>
 
-        <form onSubmit={handleFinalSubmit} className="space-y-6">
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>Messwerte erfassen</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="tempAfter">Temperatur (°C)</Label>
-                  <Input
-                    id="tempAfter"
-                    type="number"
-                    step="0.1"
-                    value={formData.tempAfter}
-                    onChange={(e) =>
-                      setFormData({ ...formData, tempAfter: e.target.value })
-                    }
-                    placeholder="z.B. 19.0"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleFinalSubmit)} className="space-y-6">
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle>Messwerte erfassen</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="tempAfter"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Temperatur (°C)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            placeholder="z.B. 19.0"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="humidityAfter"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Luftfeuchtigkeit (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="100"
+                            placeholder="z.B. 55"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="humidityAfter">Luftfeuchtigkeit (%)</Label>
-                  <Input
-                    id="humidityAfter"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    value={formData.humidityAfter}
-                    onChange={(e) =>
-                      setFormData({ ...formData, humidityAfter: e.target.value })
-                    }
-                    placeholder="z.B. 55"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate("/")}
-              className="flex-1"
-            >
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading ? "Speichert..." : "Eintrag speichern"}
-            </Button>
-          </div>
-        </form>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/")}
+                className="flex-1"
+              >
+                Abbrechen
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? "Speichert..." : "Eintrag speichern"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </div>
     );
   }
@@ -334,116 +364,147 @@ const NewEntry = () => {
     <div className="max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold text-foreground mb-6">Neuer Lüftungseintrag</h2>
 
-      <form onSubmit={handleInitialSubmit} className="space-y-6">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleInitialSubmit)} className="space-y-6">
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle>Allgemeine Angaben</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {apartments.length > 1 && (
-              <div className="space-y-2">
-                <Label htmlFor="apartment">Wohnung *</Label>
-                <Select
-                  value={formData.apartmentId}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, apartmentId: value })
-                  }
-                >
-                  <SelectTrigger id="apartment">
-                    <SelectValue placeholder="Wohnung auswählen" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {apartments.map((apt) => (
-                      <SelectItem key={apt.id} value={apt.id}>
-                        {apt.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={form.control}
+                name="apartmentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Wohnung *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Wohnung auswählen" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {apartments.map((apt) => (
+                          <SelectItem key={apt.id} value={apt.id}>
+                            {apt.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Datum *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">Uhrzeit *</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={formData.time}
-                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Räume * {formData.rooms.length > 0 && `(${formData.rooms.length} ausgewählt)`}</Label>
-              <div className="grid grid-cols-2 gap-2 p-3 border rounded-md max-h-[200px] overflow-y-auto">
-                {getCurrentApartmentRooms().map((room) => (
-                  <div key={room.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`room-${room.id}`}
-                      checked={formData.rooms.includes(room.name)}
-                      onCheckedChange={() => toggleRoom(room.name)}
-                    />
-                    <label
-                      htmlFor={`room-${room.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      {room.icon} {room.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="ventilationType">Lüftungsart *</Label>
-              <Select
-                value={formData.ventilationType}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, ventilationType: value })
-                }
-              >
-                <SelectTrigger id="ventilationType">
-                  <SelectValue placeholder="Lüftungsart auswählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {VENTILATION_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex flex-col items-start">
-                        <span className="font-medium">{type.label}</span>
-                        <span className="text-xs text-muted-foreground">{type.description}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="duration">Lüftungsdauer (Minuten) *</Label>
-              <Input
-                id="duration"
-                type="number"
-                min="1"
-                max="60"
-                value={formData.duration}
-                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                placeholder="z.B. 10"
-                required
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Datum *</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} required />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="time"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Uhrzeit *</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} required />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="rooms"
+              render={() => (
+                <FormItem>
+                  <FormLabel>
+                    Räume * {form.watch("rooms").length > 0 && `(${form.watch("rooms").length} ausgewählt)`}
+                  </FormLabel>
+                  <div className="grid grid-cols-2 gap-2 p-3 border rounded-md max-h-[200px] overflow-y-auto">
+                    {getCurrentApartmentRooms().map((room) => (
+                      <div key={room.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`room-${room.id}`}
+                          checked={form.watch("rooms").includes(room.name)}
+                          onCheckedChange={() => toggleRoom(room.name)}
+                        />
+                        <label
+                          htmlFor={`room-${room.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {room.icon} {room.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="ventilationType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lüftungsart *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Lüftungsart auswählen" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {VENTILATION_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">{type.label}</span>
+                            <span className="text-xs text-muted-foreground">{type.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lüftungsdauer (Minuten) *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="60"
+                      placeholder="z.B. 10"
+                      required
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
@@ -453,51 +514,61 @@ const NewEntry = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="tempBefore">Temperatur (°C) *</Label>
-                <Input
-                  id="tempBefore"
-                  type="number"
-                  step="0.1"
-                  value={formData.tempBefore}
-                  onChange={(e) =>
-                    setFormData({ ...formData, tempBefore: e.target.value })
-                  }
-                  placeholder="z.B. 21.5"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="humidityBefore">Luftfeuchtigkeit (%) *</Label>
-                <Input
-                  id="humidityBefore"
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
-                  value={formData.humidityBefore}
-                  onChange={(e) =>
-                    setFormData({ ...formData, humidityBefore: e.target.value })
-                  }
-                  placeholder="z.B. 65"
-                  required
-                />
-                {formData.humidityBefore && (
-                  <div className="mt-2">
-                    <HumidityIndicator
-                      humidity={parseFloat(formData.humidityBefore)}
-                      size="sm"
-                    />
-                  </div>
+              <FormField
+                control={form.control}
+                name="tempBefore"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Temperatur (°C) *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="z.B. 21.5"
+                        required
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
+              <FormField
+                control={form.control}
+                name="humidityBefore"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Luftfeuchtigkeit (%) *</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        placeholder="z.B. 65"
+                        required
+                        {...field}
+                      />
+                    </FormControl>
+                    {field.value && (
+                      <div className="mt-2">
+                        <HumidityIndicator
+                          humidity={parseFloat(field.value)}
+                          size="sm"
+                        />
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {formData.humidityBefore && parseFloat(formData.humidityBefore) > 60 && (
+            {form.watch("humidityBefore") && parseFloat(form.watch("humidityBefore")) > 60 && (
               <div className="mt-4">
                 <CriticalAlert
-                  humidity={parseFloat(formData.humidityBefore)}
-                  temp={formData.tempBefore ? parseFloat(formData.tempBefore) : undefined}
+                  humidity={parseFloat(form.watch("humidityBefore"))}
+                  temp={form.watch("tempBefore") ? parseFloat(form.watch("tempBefore")) : undefined}
                 />
               </div>
             )}
@@ -517,7 +588,8 @@ const NewEntry = () => {
             Timer starten
           </Button>
         </div>
-      </form>
+        </form>
+      </Form>
     </div>
   );
 };

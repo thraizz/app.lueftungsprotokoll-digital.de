@@ -1,0 +1,156 @@
+{
+  "@hookform/resolvers": {
+    "current": "3.10.0",
+    "wanted": "3.10.0",
+    "latest": "5.2.2",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/@hookform/resolvers"
+  },
+  "@types/node": {
+    "current": "22.18.11",
+    "wanted": "22.18.11",
+    "latest": "24.8.1",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/@types/node"
+  },
+  "@types/react": {
+    "current": "18.3.26",
+    "wanted": "18.3.26",
+    "latest": "19.2.2",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/@types/react"
+  },
+  "@types/react-dom": {
+    "current": "18.3.7",
+    "wanted": "18.3.7",
+    "latest": "19.2.2",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/@types/react-dom"
+  },
+  "@vitejs/plugin-react-swc": {
+    "current": "3.11.0",
+    "wanted": "3.11.0",
+    "latest": "4.1.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/@vitejs/plugin-react-swc"
+  },
+  "date-fns": {
+    "current": "3.6.0",
+    "wanted": "3.6.0",
+    "latest": "4.1.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/date-fns"
+  },
+  "eslint-plugin-react-hooks": {
+    "current": "5.2.0",
+    "wanted": "5.2.0",
+    "latest": "7.0.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/eslint-plugin-react-hooks"
+  },
+  "globals": {
+    "current": "15.15.0",
+    "wanted": "15.15.0",
+    "latest": "16.4.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/globals"
+  },
+  "lucide-react": {
+    "current": "0.462.0",
+    "wanted": "0.462.0",
+    "latest": "0.546.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/lucide-react"
+  },
+  "next-themes": {
+    "current": "0.3.0",
+    "wanted": "0.3.0",
+    "latest": "0.4.6",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/next-themes"
+  },
+  "react": {
+    "current": "18.3.1",
+    "wanted": "18.3.1",
+    "latest": "19.2.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/react"
+  },
+  "react-day-picker": {
+    "current": "8.10.1",
+    "wanted": "8.10.1",
+    "latest": "9.11.1",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/react-day-picker"
+  },
+  "react-dom": {
+    "current": "18.3.1",
+    "wanted": "18.3.1",
+    "latest": "19.2.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/react-dom"
+  },
+  "react-resizable-panels": {
+    "current": "2.1.9",
+    "wanted": "2.1.9",
+    "latest": "3.0.6",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/react-resizable-panels"
+  },
+  "react-router-dom": {
+    "current": "6.30.1",
+    "wanted": "6.30.1",
+    "latest": "7.9.4",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/react-router-dom"
+  },
+  "recharts": {
+    "current": "2.15.4",
+    "wanted": "2.15.4",
+    "latest": "3.3.0",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/recharts"
+  },
+  "sonner": {
+    "current": "1.7.4",
+    "wanted": "1.7.4",
+    "latest": "2.0.7",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/sonner"
+  },
+  "tailwind-merge": {
+    "current": "2.6.0",
+    "wanted": "2.6.0",
+    "latest": "3.3.1",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/tailwind-merge"
+  },
+  "tailwindcss": {
+    "current": "3.4.18",
+    "wanted": "3.4.18",
+    "latest": "4.1.14",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/tailwindcss"
+  },
+  "vaul": {
+    "current": "0.9.9",
+    "wanted": "0.9.9",
+    "latest": "1.1.2",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/vaul"
+  },
+  "vite": {
+    "current": "5.4.20",
+    "wanted": "5.4.20",
+    "latest": "7.1.10",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/vite"
+  },
+  "zod": {
+    "current": "3.25.76",
+    "wanted": "3.25.76",
+    "latest": "4.1.12",
+    "dependent": "app.lueftungsprotokoll-digital.de",
+    "location": "/Users/aron/dev/projects/app.lueftungsprotokoll-digital.de/node_modules/zod"
+  }
+}

@@ -34,14 +34,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 <Link
                   key={path}
                   to={path}
-                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
-                    isActive
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                  className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors ${isActive
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                 >
                   <Icon className="w-6 h-6" />
-                  <span className="text-xs font-medium">{label}</span>
+                  <span className="text-xs font-medium text-center">{label}</span>
                 </Link>
               );
             })}

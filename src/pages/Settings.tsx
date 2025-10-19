@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import {
   getAllApartments,
   addApartment,
@@ -10,7 +11,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Home, ChevronDown, ChevronUp } from "lucide-react";
 import { RoomManagement } from "@/components/RoomManagement";
@@ -26,16 +34,25 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DataExportImport } from "@/components/DataExportImport";
 
+interface ApartmentFormData {
+  name: string;
+  address: string;
+  size: string;
+}
+
 const Settings = () => {
   const { toast } = useToast();
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedRooms, setExpandedRooms] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    address: "",
-    size: "",
+
+  const form = useForm<ApartmentFormData>({
+    defaultValues: {
+      name: "",
+      address: "",
+      size: "",
+    },
   });
 
   useEffect(() => {
@@ -50,10 +67,8 @@ const Settings = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.name || !formData.address || !formData.size) {
+  const handleSubmit = async (data: ApartmentFormData) => {
+    if (!data.name || !data.address || !data.size) {
       toast({
         title: "Fehler",
         description: "Bitte füllen Sie alle Felder aus.",
@@ -62,7 +77,7 @@ const Settings = () => {
       return;
     }
 
-    const size = parseFloat(formData.size);
+    const size = parseFloat(data.size);
     if (isNaN(size) || size <= 0) {
       toast({
         title: "Fehler",
@@ -75,8 +90,8 @@ const Settings = () => {
     try {
       const newApartment: Apartment = {
         id: `apt-${Date.now()}`,
-        name: formData.name,
-        address: formData.address,
+        name: data.name,
+        address: data.address,
         size,
         rooms: getDefaultRooms(),
         createdAt: Date.now(),
@@ -90,7 +105,7 @@ const Settings = () => {
         description: "Wohnung wurde hinzugefügt.",
       });
 
-      setFormData({ name: "", address: "", size: "" });
+      form.reset();
       setShowAddForm(false);
     } catch (error) {
       console.error("Fehler beim Hinzufügen:", error);
@@ -146,63 +161,84 @@ const Settings = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {showAddForm && (
-            <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-muted/50 rounded-lg">
-              <h3 className="font-semibold text-foreground">Neue Wohnung hinzufügen</h3>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-4 bg-muted/50 rounded-lg">
+                <h3 className="font-semibold text-foreground">Neue Wohnung hinzufügen</h3>
 
-              <div className="space-y-2">
-                <Label htmlFor="name">Bezeichnung *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="z.B. Hauptwohnung, Apartment 3.OG"
-                  required
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bezeichnung *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="z.B. Hauptwohnung, Apartment 3.OG"
+                          required
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Adresse *</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                  placeholder="z.B. Musterstraße 123, 12345 Musterstadt"
-                  required
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Adresse *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="z.B. Musterstraße 123, 12345 Musterstadt"
+                          required
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="size">Wohnungsgröße (m²) *</Label>
-                <Input
-                  id="size"
-                  type="number"
-                  step="0.1"
-                  value={formData.size}
-                  onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                  placeholder="z.B. 75.5"
-                  required
+                <FormField
+                  control={form.control}
+                  name="size"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Wohnungsgröße (m²) *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          placeholder="z.B. 75.5"
+                          required
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
 
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowAddForm(false);
-                    setFormData({ name: "", address: "", size: "" });
-                  }}
-                  className="flex-1"
-                >
-                  Abbrechen
-                </Button>
-                <Button type="submit" className="flex-1">
-                  Speichern
-                </Button>
-              </div>
-            </form>
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      form.reset();
+                    }}
+                    className="flex-1"
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button type="submit" className="flex-1">
+                    Speichern
+                  </Button>
+                </div>
+              </form>
+            </Form>
           )}
 
           <div className="space-y-3">
