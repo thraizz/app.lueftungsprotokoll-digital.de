@@ -13,6 +13,7 @@ import Datenschutz from "./pages/Datenschutz";
 import Hilfe from "./pages/Hilfe";
 import NotFound from "./pages/NotFound";
 import { InstallPrompt } from "./components/InstallPrompt";
+import { ScrollToTop } from "./components/ScrollToTop";
 import { useAutoBackup } from "./hooks/use-auto-backup";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const AppContent = () => {
       <Sonner />
       <InstallPrompt />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Layout><Dashboard /></Layout>} />
           <Route path="/new-entry" element={<Layout><NewEntry /></Layout>} />

@@ -116,7 +116,7 @@ const Hilfe = () => {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-3">
           <p>
-            Wenn Sie weitere Fragen haben oder Unterstützung benötigen, können Sie uns gerne kontaktieren:
+            Bei technischen Fragen haben können Sie mich gerne kontaktieren. Ich biete keine rechtliche oder bauphysikalische Beratung.
           </p>
           <p>
             E-Mail:{" "}
