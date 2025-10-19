@@ -30,7 +30,7 @@ const NewEntry = () => {
   const [loading, setLoading] = useState(false);
   const { checkCritical, getHumidityColor } = useVentilationRecommendations();
   const [step, setStep] = useState<FormStep>("initial");
-  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [targetEndTime, setTargetEndTime] = useState<number | null>(null);
 
   const now = new Date();
   const [formData, setFormData] = useState({
@@ -52,19 +52,17 @@ const NewEntry = () => {
   }, []);
 
   useEffect(() => {
-    if (step === "timer" && timeRemaining > 0) {
+    if (step === "timer" && targetEndTime !== null) {
       const interval = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            setStep("after-measurements");
-            return 0;
-          }
-          return prev - 1;
-        });
+        const now = Date.now();
+        if (now >= targetEndTime) {
+          setStep("after-measurements");
+          setTargetEndTime(null);
+        }
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [step, timeRemaining]);
+  }, [step, targetEndTime]);
 
   const loadApartments = async () => {
     const data = await getAllApartments();
@@ -127,13 +125,20 @@ const NewEntry = () => {
       return;
     }
 
-    // Start timer
-    setTimeRemaining(duration * 60);
+    // Start timer - set target end time
+    const endTime = Date.now() + duration * 60 * 1000;
+    setTargetEndTime(endTime);
     setStep("timer");
   };
 
   const handleSkipTimer = () => {
     setStep("after-measurements");
+  };
+
+  const getTimeRemaining = () => {
+    if (targetEndTime === null) return 0;
+    const remaining = Math.max(0, targetEndTime - Date.now());
+    return Math.ceil(remaining / 1000);
   };
 
   const formatTime = (seconds: number) => {
@@ -214,7 +219,7 @@ const NewEntry = () => {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-6">
               <div className="text-6xl font-bold text-primary">
-                {formatTime(timeRemaining)}
+                {formatTime(getTimeRemaining())}
               </div>
               <p className="text-muted-foreground text-center">
                 Bitte lüften Sie jetzt die ausgewählten Räume.
