@@ -1,61 +1,34 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getAllEntries, getAllApartments, VentilationEntry, Apartment } from "@/lib/db";
+import { getAllEntries, getAllApartments, getMetadata, VentilationEntry, Apartment } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, AlertCircle, CheckCircle, TrendingUp, Clock, AlertTriangle, CloudRain, Wind as WindIcon } from "lucide-react";
+import { Plus, CheckCircle, TrendingUp, AlertTriangle, AlertCircle, CloudRain, Wind as WindIcon } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { VentilationChecklist } from "@/components/VentilationChecklist";
 
 const Dashboard = () => {
   const [entries, setEntries] = useState<VentilationEntry[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [nextVentilationTime, setNextVentilationTime] = useState<string>("");
+  const [checklistEnabled, setChecklistEnabled] = useState(true);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    // Update countdown timer every minute
-    const updateNextVentilation = () => {
-      if (todayEntries.length === 0) {
-        setNextVentilationTime("Heute noch nicht gelüftet");
-        return;
-      }
-
-      // Get last entry time today
-      const lastEntry = todayEntries[todayEntries.length - 1];
-      const lastTime = new Date(`${lastEntry.date}T${lastEntry.time}`);
-
-      // Recommend next ventilation 3 hours after last one
-      const nextTime = new Date(lastTime.getTime() + 3 * 60 * 60 * 1000);
-      const now = new Date();
-
-      if (now >= nextTime) {
-        setNextVentilationTime("Jetzt lüften empfohlen");
-      } else {
-        const diffMs = nextTime.getTime() - now.getTime();
-        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        setNextVentilationTime(`in ${diffHrs}h ${diffMins}min`);
-      }
-    };
-
-    updateNextVentilation();
-    const interval = setInterval(updateNextVentilation, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, [entries]);
-
   const loadData = async () => {
     try {
-      const [entriesData, apartmentsData] = await Promise.all([
+      const [entriesData, apartmentsData, checklistSetting] = await Promise.all([
         getAllEntries(),
         getAllApartments(),
+        getMetadata("checklist-enabled"),
       ]);
       setEntries(entriesData);
       setApartments(apartmentsData);
+      if (checklistSetting) {
+        setChecklistEnabled(checklistSetting.value as boolean);
+      }
     } catch (error) {
       console.error("Fehler beim Laden der Daten:", error);
     } finally {
@@ -71,6 +44,10 @@ const Dashboard = () => {
     weekAgo.setDate(weekAgo.getDate() - 7);
     return entryDate >= weekAgo;
   });
+
+  // Calculate ventilation sessions (unique timestamps) vs total rooms ventilated
+  const todaySessions = todayEntries.length;
+  const todayRoomsVentilated = new Set(todayEntries.flatMap(e => e.rooms || [])).size;
 
   const avgHumidity = last7Days.length > 0
     ? Math.round(
@@ -98,7 +75,7 @@ const Dashboard = () => {
     ? Math.floor((new Date().getTime() - lastEntryDate.getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
-  // Weather-based recommendations
+  // Weather-based and legal recommendations
   const getWeatherRecommendation = () => {
     const currentHour = new Date().getHours();
     const currentMonth = new Date().getMonth();
@@ -108,13 +85,13 @@ const Dashboard = () => {
       if (currentHour >= 11 && currentHour <= 14) {
         return {
           icon: <CloudRain className="h-4 w-4" />,
-          text: "Optimal: Mittags lüften während wärmster Tageszeit",
+          text: "Optimal: Mittags lüften während wärmster Tageszeit (Winter: 5-10 Min. Stoßlüften)",
           variant: "default" as const
         };
       }
       return {
         icon: <AlertCircle className="h-4 w-4" />,
-        text: "Winter: Kurz und kräftig lüften (5-10 Min.)",
+        text: "Winter: Kurz und kräftig stoßlüften (5-10 Min. pro Sitzung)",
         variant: "default" as const
       };
     }
@@ -124,28 +101,28 @@ const Dashboard = () => {
       if (currentHour >= 6 && currentHour <= 8) {
         return {
           icon: <WindIcon className="h-4 w-4" />,
-          text: "Optimal: Morgens lüften bevor es heiß wird",
+          text: "Optimal: Morgens lüften bevor es heiß wird (Sommer: 25-30 Min. Querlüften)",
           variant: "default" as const
         };
       }
       if (currentHour >= 20 && currentHour <= 23) {
         return {
           icon: <WindIcon className="h-4 w-4" />,
-          text: "Optimal: Abends lüften wenn es kühler wird",
+          text: "Optimal: Abends lüften wenn es kühler wird (Sommer: 25-30 Min.)",
           variant: "default" as const
         };
       }
       return {
         icon: <AlertCircle className="h-4 w-4" />,
-        text: "Sommer: Morgens/abends lüften, tagsüber Fenster geschlossen halten",
+        text: "Sommer: Morgens/abends lüften (25-30 Min.), tagsüber Fenster geschlossen halten",
         variant: "default" as const
       };
     }
 
-    // Default recommendation
+    // Default recommendation - Spring/Fall
     return {
       icon: <WindIcon className="h-4 w-4" />,
-      text: "Regelmäßig 3-4 mal täglich für 5-15 Min. lüften",
+      text: "Empfohlen: 3-4 Lüftungssitzungen täglich (10-15 Min. Stoßlüften pro Sitzung)",
       variant: "default" as const
     };
   };
@@ -188,18 +165,8 @@ const Dashboard = () => {
         </Link>
       </div>
 
-      {/* Current Hints Section */}
+      {/* Critical Alerts Only */}
       <div className="space-y-3">
-        {/* No ventilation today warning */}
-        {todayEntries.length === 0 && (
-          <Alert className="bg-warning/10 border-warning">
-            <AlertCircle className="h-4 w-4 text-warning" />
-            <AlertDescription className="text-warning-foreground">
-              Heute wurde noch nicht gelüftet. Für ein gesundes Raumklima sollten Sie 3-4 mal täglich lüften.
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Inactivity warning */}
         {daysSinceLastEntry !== null && daysSinceLastEntry >= 2 && (
           <Alert className="bg-destructive/10 border-destructive">
@@ -219,17 +186,16 @@ const Dashboard = () => {
             </AlertDescription>
           </Alert>
         )}
-
-        {/* Weather-based recommendation */}
-        <Alert>
-          {weatherRecommendation.icon}
-          <AlertDescription>
-            {weatherRecommendation.text}
-          </AlertDescription>
-        </Alert>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {checklistEnabled && apartments.length > 0 && (
+        <VentilationChecklist
+          apartment={apartments[0]}
+          entries={entries}
+        />
+      )}
+
+      <div className="grid gap-4 md:grid-cols-3">
         <Card className="shadow-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -238,25 +204,15 @@ const Dashboard = () => {
             <CheckCircle className="h-4 w-4 text-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">{todayEntries.length}</div>
+            <div className="text-3xl font-bold text-foreground">{todaySessions}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Lüftungsvorgänge dokumentiert
+              {todaySessions === 1 ? 'Lüftungssitzung' : 'Lüftungssitzungen'}
             </p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Nächste Lüftung
-            </CardTitle>
-            <Clock className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{nextVentilationTime}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Empfohlener Zeitpunkt
-            </p>
+            {todayRoomsVentilated > 0 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {todayRoomsVentilated} {todayRoomsVentilated === 1 ? 'Raum' : 'Räume'} gelüftet
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -270,7 +226,10 @@ const Dashboard = () => {
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{last7Days.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Einträge in der letzten Woche
+              {last7Days.length === 1 ? 'Sitzung' : 'Sitzungen'}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ø {Math.round(last7Days.length / 7 * 10) / 10} pro Tag
             </p>
           </CardContent>
         </Card>
@@ -287,100 +246,66 @@ const Dashboard = () => {
             <p className={`text-xs mt-1 font-medium ${humidityStatus.color}`}>
               {humidityStatus.text}
             </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Total Entries Card */}
-        <Card className="shadow-card">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Gesamt
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">{entries.length}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Lüftungsvorgänge insgesamt
+              Letzte 7 Tage
             </p>
           </CardContent>
         </Card>
-
-        {/* Last Entry Card */}
-        {entries.length > 0 && (
-          <Card className="shadow-card md:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Letzter Eintrag
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                const lastEntry = entries[entries.length - 1];
-                const status = getHumidityStatus(lastEntry.humidityBefore);
-                return (
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="font-medium text-foreground">{lastEntry.rooms?.join(', ') || 'Unbekannter Raum'}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {lastEntry.date} • {lastEntry.time} • {lastEntry.ventilationType}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className={`text-lg font-medium ${status.color}`}>
-                        {lastEntry.humidityBefore}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {lastEntry.tempBefore}°C
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
-        )}
       </div>
 
+      {/* Weather Recommendation - Only if actionable */}
+      {(() => {
+        const currentHour = new Date().getHours();
+        const currentMonth = new Date().getMonth();
+        let showWeather = false;
+
+        // Winter optimal time window
+        if ((currentMonth === 11 || currentMonth === 0 || currentMonth === 1) &&
+            currentHour >= 11 && currentHour <= 14) {
+          showWeather = true;
+        }
+        // Summer optimal time windows
+        if ((currentMonth >= 5 && currentMonth <= 7) &&
+            ((currentHour >= 6 && currentHour <= 8) || (currentHour >= 20 && currentHour <= 23))) {
+          showWeather = true;
+        }
+
+        if (showWeather) {
+          return (
+            <Alert>
+              {weatherRecommendation.icon}
+              <AlertDescription>
+                {weatherRecommendation.text}
+              </AlertDescription>
+            </Alert>
+          );
+        }
+        return null;
+      })()}
+
+      {/* Last Entry - Compact */}
       {entries.length > 0 && (
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Letzte Einträge</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {entries
-                .slice(-5)
-                .reverse()
-                .map((entry) => {
-                  const status = getHumidityStatus(entry.humidityBefore);
-                  return (
-                    <div
-                      key={entry.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium text-foreground">{entry.rooms?.join(', ') || 'Unbekannter Raum'}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {entry.date} • {entry.time} • {entry.ventilationType}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-sm font-medium ${status.color}`}>
-                          {entry.humidityBefore}%
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {entry.tempBefore}°C
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="text-sm text-muted-foreground">
+          {(() => {
+            const lastEntry = entries[entries.length - 1];
+            const status = getHumidityStatus(lastEntry.humidityBefore);
+            return (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span>Zuletzt:</span>
+                <span className="font-medium text-foreground">
+                  {lastEntry.rooms?.join(', ') || 'Unbekannter Raum'}
+                </span>
+                <span>•</span>
+                <span>{lastEntry.date} {lastEntry.time}</span>
+                <span>•</span>
+                <span>{lastEntry.ventilationType}</span>
+                <span>•</span>
+                <span className={status.color}>{lastEntry.humidityBefore}%</span>
+                <span>{lastEntry.tempBefore}°C</span>
+              </div>
+            );
+          })()}
+        </div>
       )}
     </div>
   );

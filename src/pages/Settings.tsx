@@ -6,11 +6,14 @@ import {
   deleteApartment,
   updateApartment,
   getDefaultRooms,
+  getMetadata,
+  setMetadata,
   Apartment,
 } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Form,
   FormControl,
@@ -18,9 +21,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Home, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Home, ChevronDown, ChevronUp, ClipboardCheck } from "lucide-react";
 import { RoomManagement } from "@/components/RoomManagement";
 import {
   AlertDialog,
@@ -46,6 +50,7 @@ const Settings = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [expandedRooms, setExpandedRooms] = useState<string | null>(null);
+  const [checklistEnabled, setChecklistEnabled] = useState(true);
 
   const form = useForm<ApartmentFormData>({
     defaultValues: {
@@ -57,6 +62,7 @@ const Settings = () => {
 
   useEffect(() => {
     loadApartments();
+    loadSettings();
   }, []);
 
   const loadApartments = async () => {
@@ -65,6 +71,22 @@ const Settings = () => {
     if (data.length === 0) {
       setShowAddForm(true);
     }
+  };
+
+  const loadSettings = async () => {
+    const checklistSetting = await getMetadata("checklist-enabled");
+    if (checklistSetting) {
+      setChecklistEnabled(checklistSetting.value as boolean);
+    }
+  };
+
+  const handleChecklistToggle = async (enabled: boolean) => {
+    setChecklistEnabled(enabled);
+    await setMetadata("checklist-enabled", enabled);
+    toast({
+      title: "Einstellung gespeichert",
+      description: `Tägliche Checkliste ${enabled ? "aktiviert" : "deaktiviert"}.`,
+    });
   };
 
   const handleSubmit = async (data: ApartmentFormData) => {
@@ -307,22 +329,79 @@ const Settings = () => {
         </CardContent>
       </Card>
 
+      <Card className="shadow-card">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <ClipboardCheck className="w-5 h-5" />
+            <CardTitle>Tägliche Checkliste</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium">Checkliste aktivieren</p>
+              <p className="text-sm text-muted-foreground">
+                Zeigt auf dem Dashboard eine Übersicht, welche Räume heute schon gelüftet wurden.
+              </p>
+            </div>
+            <Switch
+              checked={checklistEnabled}
+              onCheckedChange={handleChecklistToggle}
+            />
+          </div>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>Die Checkliste hilft dabei:</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Keine Räume beim Lüften zu vergessen</li>
+              <li>Eine tägliche Lüftungsroutine zu etablieren</li>
+              <li>Auf einen Blick zu sehen, was noch zu tun ist</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
       <DataExportImport />
 
       <Card className="shadow-card bg-muted/30">
         <CardHeader>
-          <CardTitle className="text-base">Rechtlicher Hinweis</CardTitle>
+          <CardTitle className="text-base">Rechtlicher Hinweis & DIN 1946-6</CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>
-            Diese App dient zur Dokumentation Ihres Lüftungsverhaltens gemäß deutscher
-            Rechtsprechung und DIN 1946-6.
-          </p>
-          <p>
-            Ein ordnungsgemäß geführtes Lüftungsprotokoll kann bei Schimmelproblemen,
-            Versicherungsfällen und Mietstreitigkeiten als Nachweis dienen.
-          </p>
-          <p className="font-medium text-foreground">
+        <CardContent className="text-sm text-muted-foreground space-y-3">
+          <div>
+            <p className="font-medium text-foreground mb-1">Was dokumentiert diese App?</p>
+            <p>
+              Diese App dokumentiert Ihre <strong>Nennlüftung</strong> und <strong>Intensivlüftung</strong> durch
+              manuelles Stoßlüften (DIN 1946-6 Lüftungsstufen 2 & 3).
+            </p>
+          </div>
+
+          <div>
+            <p className="font-medium text-foreground mb-1">Rechtliche Anforderungen</p>
+            <p>
+              Nach aktueller Rechtsprechung müssen Mieter <strong>2-4 mal täglich</strong> stoßlüften,
+              plus zusätzlich nach feuchteintensiven Tätigkeiten (Duschen, Kochen, Wäschetrocknen).
+            </p>
+          </div>
+
+          <div>
+            <p className="font-medium text-foreground mb-1">DIN 1946-6 Lüftungsstufen</p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li><strong>Feuchteschutz:</strong> Muss nutzerunabhängig sein (z.B. Fensterfalzlüfter)</li>
+              <li><strong>Nennlüftung:</strong> Tägliche Lüftung - hier dokumentieren Sie Ihr Stoßlüften</li>
+              <li><strong>Intensivlüftung:</strong> Nach Duschen, Kochen etc. - ebenfalls dokumentiert</li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-medium text-foreground mb-1">Nutzen des Protokolls</p>
+            <p>
+              Ein ordnungsgemäß geführtes Lüftungsprotokoll kann bei Schimmelproblemen,
+              Versicherungsfällen und Mietstreitigkeiten als Nachweis dienen, dass Sie
+              Ihrer Lüftungspflicht nachgekommen sind.
+            </p>
+          </div>
+
+          <p className="font-medium text-foreground pt-2">
             Die App ersetzt keine rechtliche oder bauphysikalische Beratung.
           </p>
         </CardContent>
