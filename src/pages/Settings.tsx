@@ -3,6 +3,8 @@ import {
   getAllApartments,
   addApartment,
   deleteApartment,
+  updateApartment,
+  getDefaultRooms,
   Apartment,
 } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Home } from "lucide-react";
+import { Plus, Trash2, Home, ChevronDown, ChevronUp } from "lucide-react";
+import { RoomManagement } from "@/components/RoomManagement";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +31,7 @@ const Settings = () => {
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [expandedRooms, setExpandedRooms] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -74,6 +78,7 @@ const Settings = () => {
         name: formData.name,
         address: formData.address,
         size,
+        rooms: getDefaultRooms(),
         createdAt: Date.now(),
       };
 
@@ -209,23 +214,56 @@ const Settings = () => {
               apartments.map((apt) => (
                 <div
                   key={apt.id}
-                  className="flex items-center justify-between p-4 bg-card rounded-lg border border-border hover:border-primary/50 transition-colors"
+                  className="bg-card rounded-lg border border-border hover:border-primary/50 transition-colors"
                 >
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{apt.name}</h3>
-                    <p className="text-sm text-muted-foreground">{apt.address}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Größe: {apt.size} m²
-                    </p>
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{apt.name}</h3>
+                      <p className="text-sm text-muted-foreground">{apt.address}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Größe: {apt.size} m² • {apt.rooms?.length || 0} Räume
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setExpandedRooms(expandedRooms === apt.id ? null : apt.id)}
+                      >
+                        {expandedRooms === apt.id ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setDeleteId(apt.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setDeleteId(apt.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+
+                  {expandedRooms === apt.id && (
+                    <div className="px-4 pb-4 border-t border-border pt-4">
+                      <h4 className="font-medium mb-3">Räume verwalten</h4>
+                      <RoomManagement
+                        rooms={apt.rooms || []}
+                        onChange={async (newRooms) => {
+                          const updatedApartment = { ...apt, rooms: newRooms };
+                          await updateApartment(updatedApartment);
+                          await loadApartments();
+                          toast({
+                            title: "Erfolgreich",
+                            description: "Räume wurden aktualisiert.",
+                          });
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               ))
             )}

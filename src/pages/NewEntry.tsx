@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { addEntry, getAllApartments, Apartment } from "@/lib/db";
+import { addEntry, getAllApartments, Apartment, Room } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ROOMS, VENTILATION_TYPES } from "@/lib/constants";
+import { VENTILATION_TYPES } from "@/lib/constants";
 import { useVentilationRecommendations } from "@/hooks/use-ventilation-recommendations";
 import { HumidityIndicator, CriticalAlert } from "@/components/VentilationRecommendation";
 
@@ -72,13 +72,18 @@ const NewEntry = () => {
     }
   };
 
-  const toggleRoom = (roomValue: string) => {
+  const toggleRoom = (roomName: string) => {
     setFormData((prev) => ({
       ...prev,
-      rooms: prev.rooms.includes(roomValue)
-        ? prev.rooms.filter((r) => r !== roomValue)
-        : [...prev.rooms, roomValue],
+      rooms: prev.rooms.includes(roomName)
+        ? prev.rooms.filter((r) => r !== roomName)
+        : [...prev.rooms, roomName],
     }));
+  };
+
+  const getCurrentApartmentRooms = (): Room[] => {
+    const apartment = apartments.find((apt) => apt.id === formData.apartmentId);
+    return apartment?.rooms || [];
   };
 
   const handleInitialSubmit = async (e: React.FormEvent) => {
@@ -227,11 +232,11 @@ const NewEntry = () => {
               <div className="w-full space-y-2">
                 <p className="text-sm font-medium">Ausgewählte Räume:</p>
                 <div className="flex flex-wrap gap-2">
-                  {formData.rooms.map((roomValue) => {
-                    const room = ROOMS.find((r) => r.value === roomValue);
+                  {formData.rooms.map((roomName) => {
+                    const room = getCurrentApartmentRooms().find((r) => r.name === roomName);
                     return (
-                      <span key={roomValue} className="px-3 py-1 bg-secondary rounded-full text-sm">
-                        {room?.icon} {room?.label}
+                      <span key={roomName} className="px-3 py-1 bg-secondary rounded-full text-sm">
+                        {room?.icon} {roomName}
                       </span>
                     );
                   })}
@@ -372,18 +377,18 @@ const NewEntry = () => {
             <div className="space-y-2">
               <Label>Räume * {formData.rooms.length > 0 && `(${formData.rooms.length} ausgewählt)`}</Label>
               <div className="grid grid-cols-2 gap-2 p-3 border rounded-md max-h-[200px] overflow-y-auto">
-                {ROOMS.map((room) => (
-                  <div key={room.value} className="flex items-center space-x-2">
+                {getCurrentApartmentRooms().map((room) => (
+                  <div key={room.id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`room-${room.value}`}
-                      checked={formData.rooms.includes(room.value)}
-                      onCheckedChange={() => toggleRoom(room.value)}
+                      id={`room-${room.id}`}
+                      checked={formData.rooms.includes(room.name)}
+                      onCheckedChange={() => toggleRoom(room.name)}
                     />
                     <label
-                      htmlFor={`room-${room.value}`}
+                      htmlFor={`room-${room.id}`}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
-                      {room.icon} {room.label}
+                      {room.icon} {room.name}
                     </label>
                   </div>
                 ))}

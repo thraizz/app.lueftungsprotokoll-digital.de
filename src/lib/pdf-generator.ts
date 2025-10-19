@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { VentilationEntry, Apartment } from './db';
-import { ROOMS, VENTILATION_TYPES } from './constants';
+import { VENTILATION_TYPES } from './constants';
 
 interface PDFGenerationOptions {
   entries: VentilationEntry[];
@@ -26,12 +26,6 @@ async function generateDocumentHash(content: string): Promise<string> {
 function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split('-');
   return `${day}.${month}.${year}`;
-}
-
-// Get room label from value
-function getRoomLabel(value: string): string {
-  const room = ROOMS.find(r => r.value === value);
-  return room ? room.label : value;
 }
 
 // Get ventilation type label from value
@@ -154,7 +148,7 @@ export async function generateVentilationProtocolPDF(
         (index + 1).toString(),
         formatDate(entry.date),
         entry.time,
-        entry.rooms?.map(r => getRoomLabel(r)).join(', ') || '',
+        entry.rooms?.join(', ') || '',
         tempChange,
         humidityChange,
         getVentilationTypeLabel(entry.ventilationType),

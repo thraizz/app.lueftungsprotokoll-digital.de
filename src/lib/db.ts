@@ -1,6 +1,13 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
-const DB_VERSION = 3;
+const DB_VERSION = 4;
+
+export interface Room {
+  id: string;
+  name: string;
+  icon?: string;
+  order: number;
+}
 
 export interface VentilationEntry {
   id?: number;
@@ -23,6 +30,7 @@ export interface Apartment {
   name: string;
   address: string;
   size: number;
+  rooms: Room[];
   createdAt: number;
 }
 
@@ -150,10 +158,39 @@ export const getDB = async () => {
             }
           }
         }
+
+        // Version 4: Add rooms array to apartments
+        if (oldVersion < 4) {
+          const apartmentsStore = transaction.objectStore('apartments');
+          const allApartments = await apartmentsStore.getAll();
+
+          for (const apartment of allApartments) {
+            if (!apartment.rooms || !Array.isArray(apartment.rooms)) {
+              const migratedApartment = {
+                ...apartment,
+                rooms: getDefaultRooms(),
+              };
+              await apartmentsStore.put(migratedApartment);
+            }
+          }
+        }
       },
     });
   }
   return dbPromise;
+};
+
+// Helper function to get default rooms
+export const getDefaultRooms = (): Room[] => {
+  return [
+    { id: 'room-1', name: 'Wohnzimmer', icon: '🛋️', order: 1 },
+    { id: 'room-2', name: 'Schlafzimmer', icon: '🛏️', order: 2 },
+    { id: 'room-3', name: 'Küche', icon: '🍳', order: 3 },
+    { id: 'room-4', name: 'Bad', icon: '🚿', order: 4 },
+    { id: 'room-5', name: 'Flur', icon: '🚪', order: 5 },
+    { id: 'room-6', name: 'Arbeitszimmer', icon: '💼', order: 6 },
+    { id: 'room-7', name: 'Kinderzimmer', icon: '🧸', order: 7 },
+  ];
 };
 
 // Entries
