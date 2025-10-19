@@ -129,14 +129,23 @@ export const getDB = async () => {
           const allEntries = await entriesStore.getAll();
 
           for (const entry of allEntries) {
+            let needsUpdate = false;
+            const migratedEntry = { ...entry };
+
             // Migrate old single room string to rooms array
             if ('room' in entry && typeof entry.room === 'string') {
-              const migratedEntry = {
-                ...entry,
-                rooms: [entry.room],
-              };
-              // Remove old room property
+              migratedEntry.rooms = [entry.room];
               delete (migratedEntry as any).room;
+              needsUpdate = true;
+            }
+
+            // Ensure rooms array exists, even if empty
+            if (!migratedEntry.rooms || !Array.isArray(migratedEntry.rooms)) {
+              migratedEntry.rooms = [];
+              needsUpdate = true;
+            }
+
+            if (needsUpdate) {
               await entriesStore.put(migratedEntry);
             }
           }
@@ -370,7 +379,7 @@ export const exportDataAsCSV = async () => {
     entry.apartmentId,
     entry.date,
     entry.time,
-    entry.rooms.join(', '),
+    entry.rooms?.join(', ') || '',
     entry.ventilationType,
     entry.duration,
     entry.tempBefore,

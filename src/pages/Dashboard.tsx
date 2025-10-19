@@ -323,7 +323,7 @@ const Dashboard = () => {
                 return (
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <div className="font-medium text-foreground">{lastEntry.rooms.join(', ')}</div>
+                      <div className="font-medium text-foreground">{lastEntry.rooms?.join(', ') || 'Unbekannter Raum'}</div>
                       <div className="text-sm text-muted-foreground">
                         {lastEntry.date} • {lastEntry.time} • {lastEntry.ventilationType}
                       </div>
@@ -362,7 +362,7 @@ const Dashboard = () => {
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                     >
                       <div className="flex-1">
-                        <div className="font-medium text-foreground">{entry.rooms.join(', ')}</div>
+                        <div className="font-medium text-foreground">{entry.rooms?.join(', ') || 'Unbekannter Raum'}</div>
                         <div className="text-sm text-muted-foreground">
                           {entry.date} • {entry.time} • {entry.ventilationType}
                         </div>

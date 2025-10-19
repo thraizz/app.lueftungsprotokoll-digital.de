@@ -71,7 +71,7 @@ export const useVentilationRecommendations = (): UseVentilationRecommendationsRe
 
     // Get last ventilation for this room
     const roomEntries = recentEntries
-      .filter((e) => e.rooms.includes(room) && e.apartmentId === currentApartment.id)
+      .filter((e) => e.rooms?.includes(room) && e.apartmentId === currentApartment.id)
       .sort((a, b) => b.createdAt - a.createdAt);
 
     const lastVentilation = roomEntries.length > 0 ? new Date(roomEntries[0].createdAt) : undefined;
@@ -94,7 +94,7 @@ export const useVentilationRecommendations = (): UseVentilationRecommendationsRe
     if (!currentApartment) return null;
 
     const roomEntries = recentEntries.filter(
-      (e) => e.rooms.includes(room) && e.apartmentId === currentApartment.id
+      (e) => e.rooms?.includes(room) && e.apartmentId === currentApartment.id
     );
 
     return recommendationEngine.getNextRecommendedTime(room, roomEntries);

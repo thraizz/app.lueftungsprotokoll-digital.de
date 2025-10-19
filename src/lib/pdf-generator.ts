@@ -154,7 +154,7 @@ export async function generateVentilationProtocolPDF(
         (index + 1).toString(),
         formatDate(entry.date),
         entry.time,
-        entry.rooms.map(r => getRoomLabel(r)).join(', '),
+        entry.rooms?.map(r => getRoomLabel(r)).join(', ') || '',
         tempChange,
         humidityChange,
         getVentilationTypeLabel(entry.ventilationType),

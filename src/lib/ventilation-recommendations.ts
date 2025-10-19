@@ -231,7 +231,7 @@ export class VentilationRecommendationEngine {
     }
 
     // Generate message
-    let message = this.generateMessage(urgency, duration, ventilationType, frequency, room);
+    const message = this.generateMessage(urgency, duration, ventilationType, frequency, room);
 
     return {
       duration,
@@ -269,7 +269,7 @@ export class VentilationRecommendationEngine {
    */
   getNextRecommendedTime(room: string, lastEntries: VentilationEntry[]): Date | null {
     const roomAdvice = this.getRoomSpecificAdvice(room);
-    const roomEntries = lastEntries.filter((e) => e.rooms.includes(room));
+    const roomEntries = lastEntries.filter((e) => e.rooms?.includes(room));
 
     if (roomEntries.length === 0) {
       // Never ventilated, recommend now
