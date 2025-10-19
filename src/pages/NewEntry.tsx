@@ -31,6 +31,7 @@ const NewEntry = () => {
   const { checkCritical, getHumidityColor } = useVentilationRecommendations();
   const [step, setStep] = useState<FormStep>("initial");
   const [targetEndTime, setTargetEndTime] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
 
   const now = new Date();
   const [formData, setFormData] = useState({
@@ -67,6 +68,10 @@ const NewEntry = () => {
     if (step === "timer" && targetEndTime !== null) {
       const interval = setInterval(() => {
         const now = Date.now();
+        const remaining = Math.max(0, targetEndTime - now);
+        const seconds = Math.ceil(remaining / 1000);
+        setRemainingSeconds(seconds);
+
         if (now >= targetEndTime) {
           setStep("after-measurements");
           setTargetEndTime(null);
@@ -145,17 +150,12 @@ const NewEntry = () => {
     // Start timer - set target end time
     const endTime = Date.now() + duration * 60 * 1000;
     setTargetEndTime(endTime);
+    setRemainingSeconds(duration * 60);
     setStep("timer");
   };
 
   const handleSkipTimer = () => {
     setStep("after-measurements");
-  };
-
-  const getTimeRemaining = () => {
-    if (targetEndTime === null) return 0;
-    const remaining = Math.max(0, targetEndTime - Date.now());
-    return Math.ceil(remaining / 1000);
   };
 
   const formatTime = (seconds: number) => {
@@ -236,7 +236,7 @@ const NewEntry = () => {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-6">
               <div className="text-6xl font-bold text-primary">
-                {formatTime(getTimeRemaining())}
+                {formatTime(remainingSeconds)}
               </div>
               <p className="text-muted-foreground text-center">
                 Bitte lüften Sie jetzt die ausgewählten Räume.
