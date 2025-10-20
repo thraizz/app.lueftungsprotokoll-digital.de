@@ -25,8 +25,9 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Home, ChevronDown, ChevronUp, ClipboardCheck } from "lucide-react";
+import { Plus, Trash2, Home, ChevronDown, ChevronUp, ClipboardCheck, Bell } from "lucide-react";
 import { RoomManagement } from "@/components/RoomManagement";
+import { NotificationSettings } from "@/components/NotificationSettings";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -327,6 +328,18 @@ const Settings = () => {
               ))
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-card">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            <CardTitle>Erinnerungen</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <NotificationSettings />
         </CardContent>
       </Card>
 

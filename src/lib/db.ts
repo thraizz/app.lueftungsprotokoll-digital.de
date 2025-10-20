@@ -1,6 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 export interface Room {
   id: string;
@@ -60,6 +60,23 @@ export interface AppMetadata {
   updatedAt: number;
 }
 
+export interface NotificationTime {
+  id: string;
+  time: string;
+  enabled: boolean;
+  label: string;
+}
+
+export interface NotificationSettings {
+  id: string;
+  apartmentId?: string;
+  roomId?: string;
+  times: NotificationTime[];
+  enabled: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface VentilationDB extends DBSchema {
   entries: {
     key: number;
@@ -83,6 +100,11 @@ interface VentilationDB extends DBSchema {
   metadata: {
     key: string;
     value: AppMetadata;
+  };
+  notificationSettings: {
+    key: string;
+    value: NotificationSettings;
+    indexes: { 'by-apartment': string; 'by-room': string };
   };
 }
 
@@ -172,6 +194,17 @@ export const getDB = async () => {
               };
               await apartmentsStore.put(migratedApartment);
             }
+          }
+        }
+
+        // Version 5: Add notification settings store
+        if (oldVersion < 5) {
+          if (!db.objectStoreNames.contains('notificationSettings')) {
+            const notificationStore = db.createObjectStore('notificationSettings', {
+              keyPath: 'id',
+            });
+            notificationStore.createIndex('by-apartment', 'apartmentId');
+            notificationStore.createIndex('by-room', 'roomId');
           }
         }
       },
@@ -480,4 +513,47 @@ export const importData = async (
       apartments: data.data.apartments.length,
     },
   };
+};
+
+// Notification Settings
+export const getDefaultNotificationTimes = (): NotificationTime[] => {
+  return [
+    { id: 'time-1', time: '07:00', enabled: true, label: 'Morgens' },
+    { id: 'time-2', time: '12:00', enabled: true, label: 'Mittags' },
+    { id: 'time-3', time: '18:00', enabled: true, label: 'Abends' },
+    { id: 'time-4', time: '21:00', enabled: true, label: 'Vor Schlafenszeit' },
+  ];
+};
+
+export const getNotificationSettings = async (id: string) => {
+  const db = await getDB();
+  return db.get('notificationSettings', id);
+};
+
+export const getAllNotificationSettings = async () => {
+  const db = await getDB();
+  return db.getAll('notificationSettings');
+};
+
+export const getNotificationSettingsByApartment = async (apartmentId: string) => {
+  const db = await getDB();
+  return db.getAllFromIndex('notificationSettings', 'by-apartment', apartmentId);
+};
+
+export const getNotificationSettingsByRoom = async (roomId: string) => {
+  const db = await getDB();
+  return db.getAllFromIndex('notificationSettings', 'by-room', roomId);
+};
+
+export const saveNotificationSettings = async (settings: NotificationSettings) => {
+  const db = await getDB();
+  await db.put('notificationSettings', {
+    ...settings,
+    updatedAt: Date.now(),
+  });
+};
+
+export const deleteNotificationSettings = async (id: string) => {
+  const db = await getDB();
+  await db.delete('notificationSettings', id);
 };
