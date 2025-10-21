@@ -3,6 +3,7 @@
 ## Project info
 
 **URL**: https://app.lueftungsprotokoll-digital.de
+**Tickets**: https://kanboard.lakur.tech/public/board/feaff64d7caa6fe772007d85b60b8a8db3807ebb2786c91cb53b39b65042
 
 ## 1. Projektübersicht
 
@@ -190,13 +191,13 @@ Eine webbasierte Anwendung zur rechtssicheren Dokumentation des Lüftungsverhalt
 
 Die Anwendung gewährleistet Rechtssicherheit durch:
 
-✅ **Vollständige Pflichtangaben** gemäß deutscher Standards  
-✅ **Unveränderbarkeit** gespeicherter Einträge  
-✅ **Zeitstempel und Revisionssicherheit**  
-✅ **DSGVO-konforme Datenspeicherung**  
-✅ **Beweiskräftige PDF-Exporte** mit Hash-Werten  
-✅ **Transparente Datenhaltung** (Nutzer behält Kontrolle)  
-✅ **Protokollierung von Änderungen/Löschungen**  
+✅ **Vollständige Pflichtangaben** gemäß deutscher Standards
+✅ **Unveränderbarkeit** gespeicherter Einträge
+✅ **Zeitstempel und Revisionssicherheit**
+✅ **DSGVO-konforme Datenspeicherung**
+✅ **Beweiskräftige PDF-Exporte** mit Hash-Werten
+✅ **Transparente Datenhaltung** (Nutzer behält Kontrolle)
+✅ **Protokollierung von Änderungen/Löschungen**
 ✅ **Compliance** mit DIN 1946-6 (Lüftungskonzepte)
 
 ## 6. Qualitätssicherung
