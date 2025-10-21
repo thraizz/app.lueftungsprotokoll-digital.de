@@ -235,8 +235,6 @@ Die Anwendung gewährleistet Rechtssicherheit durch:
 
 Diese Spezifikation bildet die Grundlage für eine rechtssichere, benutzerfreundliche und zukunftsfähige Webanwendung zur Lüftungsdokumentation.
 
-
-
 # V2
 ## Grafische Visualisierung
 - Temperaturverlauf über Zeit
@@ -248,7 +246,7 @@ Diese Spezifikation bildet die Grundlage für eine rechtssichere, benutzerfreund
 - Maschinenlesbare Formate für Sachverständige
 - Alle Datenfelder inklusive Metadaten
 
-## Zusatzfunktionen (Premium/Pro-Version)
+## Zusatzfunktionen
 
 ### 4.1 Erweiterte Features
 - **Mehrere Wohnungen/Objekte verwalten** (für Vermieter)
@@ -265,26 +263,3 @@ Diese Spezifikation bildet die Grundlage für eine rechtssichere, benutzerfreund
 - Versicherungsportale (automatische Übermittlung bei Schaden)
 
 - Chart.js oder Recharts (Datenvisualisierung)
-# V3
-
-### 8.1 Freemium-Modell
-**Kostenlos:**
-- 1 Wohnung
-- Unbegrenzte Einträge
-- Basis-Export (PDF/Excel)
-- 6 Monate Datenspeicherung
-
-**Premium (4,99€/Monat oder 49,99€/Jahr):**
-- Unbegrenzte Wohnungen
-- Cloud-Synchronisation
-- Erweiterte Auswertungen
-- Unbegrenzte Speicherung
-- Prioritäts-Support
-- White-Label (auf Anfrage)
-
-### 8.2 B2B-Angebot für Hausverwaltungen
-- Lizenzmodell pro Wohneinheit
-- Mandantenfähigkeit
-- API-Zugriff
-- Schulungen
-- API für Drittanbieter
