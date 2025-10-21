@@ -9,9 +9,16 @@ import {
 export class NotificationService {
   private static instance: NotificationService;
   private scheduledNotifications: Map<string, number> = new Map();
+  private initialized: boolean = false;
 
   private constructor() {
-    this.init();
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data.type === 'NOTIFICATION_CLICKED') {
+          window.focus();
+        }
+      });
+    }
   }
 
   static getInstance(): NotificationService {
@@ -21,18 +28,15 @@ export class NotificationService {
     return NotificationService.instance;
   }
 
-  private init() {
+  async initialize() {
+    if (this.initialized) return;
     if (typeof window === 'undefined') return;
 
+    this.initialized = true;
     this.checkNotificationSupport();
-    this.scheduleAllNotifications();
 
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.addEventListener('message', event => {
-        if (event.data.type === 'NOTIFICATION_CLICKED') {
-          window.focus();
-        }
-      });
+    if (this.getPermissionStatus() === 'granted') {
+      await this.scheduleAllNotifications();
     }
   }
 
@@ -88,7 +92,6 @@ export class NotificationService {
         await registration.showNotification(title, {
           icon: '/icon-192.png',
           badge: '/icon-192.png',
-          vibrate: [200, 100, 200],
           tag: 'ventilation-reminder',
           requireInteraction: false,
           ...options,
@@ -169,7 +172,7 @@ export class NotificationService {
     settings: NotificationSettings,
     timeConfig: NotificationTime
   ): Promise<void> {
-    let title = `Zeit zum Luften`;
+    const title = `Zeit zum Luften`;
     let body = `Erinnerung: ${timeConfig.label}`;
 
     if (settings.apartmentId) {

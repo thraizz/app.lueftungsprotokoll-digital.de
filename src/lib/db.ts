@@ -1,6 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 export interface Room {
   id: string;
@@ -110,6 +110,15 @@ interface VentilationDB extends DBSchema {
 
 let dbPromise: Promise<IDBPDatabase<VentilationDB>> | null = null;
 
+const resetDBPromise = () => {
+  dbPromise = null;
+};
+
+// Expose reset function for migrations
+if (typeof window !== 'undefined') {
+  (window as typeof window & { __dbPromiseReset?: () => void }).__dbPromiseReset = resetDBPromise;
+}
+
 export const getDB = async () => {
   if (!dbPromise) {
     dbPromise = openDB<VentilationDB>('ventilation-db', DB_VERSION, {
@@ -165,7 +174,7 @@ export const getDB = async () => {
             // Migrate old single room string to rooms array
             if ('room' in entry && typeof entry.room === 'string') {
               migratedEntry.rooms = [entry.room];
-              delete (migratedEntry as any).room;
+              delete (migratedEntry as VentilationEntry & { room?: string }).room;
               needsUpdate = true;
             }
 
@@ -203,11 +212,106 @@ export const getDB = async () => {
             const notificationStore = db.createObjectStore('notificationSettings', {
               keyPath: 'id',
             });
-            notificationStore.createIndex('by-apartment', 'apartmentId');
-            notificationStore.createIndex('by-room', 'roomId');
+            notificationStore.createIndex('by-apartment', 'apartmentId', { unique: false });
+            notificationStore.createIndex('by-room', 'roomId', { unique: false });
+          }
+        }
+
+        // Version 6: Ensure notification settings store exists (fix for users who had incomplete v5 migration)
+        if (oldVersion < 6) {
+          if (!db.objectStoreNames.contains('notificationSettings')) {
+            const notificationStore = db.createObjectStore('notificationSettings', {
+              keyPath: 'id',
+            });
+            notificationStore.createIndex('by-apartment', 'apartmentId', { unique: false });
+            notificationStore.createIndex('by-room', 'roomId', { unique: false });
           }
         }
       },
+      blocked() {
+        console.warn('Database upgrade blocked by another connection');
+      },
+      blocking() {
+        console.warn('This connection is blocking a database upgrade');
+      },
+      terminated() {
+        console.error('Database connection was unexpectedly terminated');
+        resetDBPromise();
+      },
+    }).catch(async (error) => {
+      console.error('Error opening database:', error);
+
+      if (error.name === 'NotFoundError' || error.message?.includes('object store')) {
+        console.log('Database schema mismatch detected, attempting recovery...');
+        resetDBPromise();
+
+        const dbDeleteRequest = indexedDB.deleteDatabase('ventilation-db');
+
+        return new Promise<IDBPDatabase<VentilationDB>>((resolve, reject) => {
+          dbDeleteRequest.onsuccess = async () => {
+            console.log('Old database deleted, creating fresh database...');
+            try {
+              const freshDB = await openDB<VentilationDB>('ventilation-db', DB_VERSION, {
+                async upgrade(db, oldVersion, newVersion, transaction) {
+                  if (oldVersion < 1) {
+                    if (!db.objectStoreNames.contains('entries')) {
+                      const entryStore = db.createObjectStore('entries', {
+                        keyPath: 'id',
+                        autoIncrement: true,
+                      });
+                      entryStore.createIndex('by-apartment', 'apartmentId');
+                      entryStore.createIndex('by-date', 'date');
+                    }
+                    if (!db.objectStoreNames.contains('apartments')) {
+                      db.createObjectStore('apartments', { keyPath: 'id' });
+                    }
+                  }
+
+                  if (oldVersion < 2) {
+                    if (!db.objectStoreNames.contains('deletionLog')) {
+                      const deletionStore = db.createObjectStore('deletionLog', {
+                        keyPath: 'id',
+                        autoIncrement: true,
+                      });
+                      deletionStore.createIndex('by-type', 'type');
+                      deletionStore.createIndex('by-deleted-at', 'deletedAt');
+                    }
+
+                    if (!db.objectStoreNames.contains('backups')) {
+                      const backupStore = db.createObjectStore('backups', {
+                        keyPath: 'id',
+                        autoIncrement: true,
+                      });
+                      backupStore.createIndex('by-timestamp', 'timestamp');
+                    }
+
+                    if (!db.objectStoreNames.contains('metadata')) {
+                      db.createObjectStore('metadata', { keyPath: 'key' });
+                    }
+                  }
+
+                  if (!db.objectStoreNames.contains('notificationSettings')) {
+                    const notificationStore = db.createObjectStore('notificationSettings', {
+                      keyPath: 'id',
+                    });
+                    notificationStore.createIndex('by-apartment', 'apartmentId', { unique: false });
+                    notificationStore.createIndex('by-room', 'roomId', { unique: false });
+                  }
+                },
+              });
+              resolve(freshDB);
+            } catch (freshError) {
+              reject(freshError);
+            }
+          };
+
+          dbDeleteRequest.onerror = () => {
+            reject(new Error('Failed to delete corrupted database'));
+          };
+        });
+      }
+
+      throw error;
     });
   }
   return dbPromise;

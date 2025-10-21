@@ -30,27 +30,27 @@ export default {
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          foreground: "hsl(var(--foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          foreground: "hsl(var(--foreground))",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          foreground: "hsl(var(--foreground))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
+          foreground: "hsl(var(--foreground))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
+          foreground: "hsl(var(--foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          foreground: "hsl(var(--foreground))",
         },
         card: {
           DEFAULT: "hsl(var(--card))",

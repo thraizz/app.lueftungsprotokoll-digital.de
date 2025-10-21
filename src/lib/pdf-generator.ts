@@ -200,7 +200,7 @@ export async function generateVentilationProtocolPDF(
     });
 
     // Get final Y position after table
-    yPos = (doc as any).lastAutoTable.finalY + 10;
+    yPos = (doc as typeof doc & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? yPos + 10;
   } else {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);

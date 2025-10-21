@@ -8,7 +8,7 @@ import {
   saveNotificationSettings,
   getDefaultNotificationTimes,
   getAllApartments,
-  type NotificationSettings,
+  type NotificationSettings as NotificationSettingsType,
   type NotificationTime,
 } from '@/lib/db';
 import { notificationService } from '@/lib/notification-service';
@@ -30,16 +30,21 @@ export const NotificationSettings = () => {
   const [permissionStatus, setPermissionStatus] = useState<
     NotificationPermission | 'unsupported'
   >('default');
-  const [settings, setSettings] = useState<NotificationSettings | null>(null);
+  const [settings, setSettings] = useState<NotificationSettingsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddTimeDialog, setShowAddTimeDialog] = useState(false);
   const [newTimeLabel, setNewTimeLabel] = useState('');
   const [newTimeValue, setNewTimeValue] = useState('12:00');
 
   useEffect(() => {
-    loadSettings();
-    setPermissionStatus(notificationService.getPermissionStatus());
+    initializeNotifications();
   }, []);
+
+  const initializeNotifications = async () => {
+    await notificationService.initialize();
+    setPermissionStatus(notificationService.getPermissionStatus());
+    await loadSettings();
+  };
 
   const loadSettings = async () => {
     setIsLoading(true);
@@ -50,7 +55,7 @@ export const NotificationSettings = () => {
       if (allSettings.length > 0) {
         setSettings(allSettings[0]);
       } else if (apartments.length > 0) {
-        const defaultSettings: NotificationSettings = {
+        const defaultSettings: NotificationSettingsType = {
           id: 'global-settings',
           apartmentId: apartments[0].id,
           times: getDefaultNotificationTimes(),
@@ -61,7 +66,7 @@ export const NotificationSettings = () => {
         await saveNotificationSettings(defaultSettings);
         setSettings(defaultSettings);
       } else {
-        const defaultSettings: NotificationSettings = {
+        const defaultSettings: NotificationSettingsType = {
           id: 'global-settings',
           times: getDefaultNotificationTimes(),
           enabled: false,
@@ -147,9 +152,8 @@ export const NotificationSettings = () => {
 
     toast({
       title: enabled ? 'Zeit aktiviert' : 'Zeit deaktiviert',
-      description: `Benachrichtigung um ${
-        settings.times.find(t => t.id === timeId)?.time
-      } ${enabled ? 'aktiviert' : 'deaktiviert'}.`,
+      description: `Benachrichtigung um ${settings.times.find(t => t.id === timeId)?.time
+        } ${enabled ? 'aktiviert' : 'deaktiviert'}.`,
     });
   };
 
@@ -201,21 +205,6 @@ export const NotificationSettings = () => {
     toast({
       title: 'Zeit entfernt',
       description: 'Benachrichtigungszeit wurde entfernt.',
-    });
-  };
-
-  const handleTestNotification = async () => {
-    if (permissionStatus !== 'granted') {
-      await requestPermission();
-      if (notificationService.getPermissionStatus() !== 'granted') {
-        return;
-      }
-    }
-
-    await notificationService.testNotification();
-    toast({
-      title: 'Test-Benachrichtigung gesendet',
-      description: 'Prufen Sie, ob die Benachrichtigung angezeigt wird.',
     });
   };
 
@@ -320,17 +309,6 @@ export const NotificationSettings = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="pt-4 border-t border-border">
-        <Button
-          variant="outline"
-          onClick={handleTestNotification}
-          className="w-full"
-        >
-          <TestTube className="w-4 h-4 mr-2" />
-          Test-Benachrichtigung senden
-        </Button>
       </div>
 
       <AlertDialog open={showAddTimeDialog} onOpenChange={setShowAddTimeDialog}>
