@@ -15,6 +15,7 @@ import NotFound from "./pages/NotFound";
 import { InstallPrompt } from "./components/InstallPrompt";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { useAutoBackup } from "./hooks/use-auto-backup";
+import { VentilationSessionProvider } from "./contexts/VentilationSessionContext";
 
 const queryClient = new QueryClient();
 
@@ -46,7 +47,9 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AppContent />
+      <VentilationSessionProvider>
+        <AppContent />
+      </VentilationSessionProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

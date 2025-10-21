@@ -27,8 +27,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { VENTILATION_TYPES } from "@/lib/constants";
 import { useVentilationRecommendations } from "@/hooks/use-ventilation-recommendations";
 import { HumidityIndicator, CriticalAlert } from "@/components/VentilationRecommendation";
-
-type FormStep = "initial" | "timer" | "after-measurements";
+import { useVentilationSession } from "@/contexts/VentilationSessionContext";
 
 interface FormData {
   apartmentId: string;
@@ -50,13 +49,12 @@ const NewEntry = () => {
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [loading, setLoading] = useState(false);
   const { checkCritical, getHumidityColor } = useVentilationRecommendations();
-  const [step, setStep] = useState<FormStep>("initial");
-  const [targetEndTime, setTargetEndTime] = useState<number | null>(null);
-  const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
+  const { session, startSession, updateSession, clearSession, getRemainingSeconds } = useVentilationSession();
+  const [remainingSeconds, setRemainingSeconds] = useState<number>(getRemainingSeconds());
 
   const now = new Date();
   const form = useForm<FormData>({
-    defaultValues: {
+    defaultValues: session.formData || {
       apartmentId: "",
       date: now.toISOString().split("T")[0],
       time: now.toTimeString().slice(0, 5),
@@ -75,6 +73,15 @@ const NewEntry = () => {
     loadApartments();
   }, []);
 
+  // Restore form data from session on mount
+  useEffect(() => {
+    if (session.formData) {
+      Object.entries(session.formData).forEach(([key, value]) => {
+        form.setValue(key as keyof FormData, value as any);
+      });
+    }
+  }, []);
+
   useEffect(() => {
     const apartmentId = form.watch("apartmentId");
     if (apartmentId) {
@@ -86,21 +93,20 @@ const NewEntry = () => {
   }, [form.watch("apartmentId"), apartments, form]);
 
   useEffect(() => {
-    if (step === "timer" && targetEndTime !== null) {
+    if (session.step === "timer" && session.targetEndTime !== null) {
       const interval = setInterval(() => {
         const now = Date.now();
-        const remaining = Math.max(0, targetEndTime - now);
+        const remaining = Math.max(0, session.targetEndTime! - now);
         const seconds = Math.ceil(remaining / 1000);
         setRemainingSeconds(seconds);
 
-        if (now >= targetEndTime) {
-          setStep("after-measurements");
-          setTargetEndTime(null);
+        if (now >= session.targetEndTime!) {
+          updateSession({ step: "after-measurements", targetEndTime: null });
         }
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [step, targetEndTime]);
+  }, [session.step, session.targetEndTime, updateSession]);
 
   const loadApartments = async () => {
     const data = await getAllApartments();
@@ -167,13 +173,12 @@ const NewEntry = () => {
 
     // Start timer - set target end time
     const endTime = Date.now() + duration * 60 * 1000;
-    setTargetEndTime(endTime);
     setRemainingSeconds(duration * 60);
-    setStep("timer");
+    startSession(data, endTime);
   };
 
   const handleSkipTimer = () => {
-    setStep("after-measurements");
+    updateSession({ step: "after-measurements", targetEndTime: null });
   };
 
   const formatTime = (seconds: number) => {
@@ -215,6 +220,7 @@ const NewEntry = () => {
         description: `Lüftungsvorgang für ${roomsText} wurde dokumentiert.`,
       });
 
+      clearSession();
       navigate("/");
     } catch (error) {
       console.error("Fehler beim Speichern:", error);
@@ -244,8 +250,8 @@ const NewEntry = () => {
     );
   }
 
-  if (step === "timer") {
-    const rooms = form.getValues("rooms");
+  if (session.step === "timer") {
+    const rooms = session.formData?.rooms || [];
     return (
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold text-foreground mb-6">Lüftungsvorgang läuft</h2>
@@ -286,7 +292,7 @@ const NewEntry = () => {
     );
   }
 
-  if (step === "after-measurements") {
+  if (session.step === "after-measurements") {
     return (
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold text-foreground mb-6">Messwerte nach dem Lüften</h2>
@@ -345,7 +351,10 @@ const NewEntry = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/")}
+                onClick={() => {
+                  clearSession();
+                  navigate("/");
+                }}
                 className="flex-1"
               >
                 Abbrechen
@@ -579,7 +588,10 @@ const NewEntry = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              clearSession();
+              navigate("/");
+            }}
             className="flex-1"
           >
             Abbrechen
