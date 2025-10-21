@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/c74f282c-c1a9-4864-a4b6-a8153bfae80b
+**URL**: https://app.lueftungsprotokoll-digital.de
 
 ## 1. Projektübersicht
 
